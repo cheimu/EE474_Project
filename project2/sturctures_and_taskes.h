@@ -1,8 +1,6 @@
 #ifndef STRUCT
 #define STRUCT
 
-volatile static int times;
-
 void measure(void* data);
 void compute(void* data);
 void display(void* data);
