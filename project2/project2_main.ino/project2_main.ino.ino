@@ -18,16 +18,17 @@ Bool tempHigh = FALSE;
 Bool pulseLow = FALSE;
 
 // pointer initialization
-unsigned int* tempretureRaw = &tempretureRaw;
-unsigned int* systolicPressRaw = &systolicPressRaw;
-unsigned int* diastolicPressRaw = &diastolicPressRaw;
-unsigned int* pulseRateRaw = &pulseRateRaw;
-unsigned char** tempCorrected = &tempCorrected;
-unsigned char** sysPressCorrected = &sysPressCorrected;
-unsigned char** diastolicPressCorrected = &diastolicPressCorrected;
-unsigned char** pulseRateCorrected = &pulseRateCorrected;
-unsigned short* batteryState = batteryState;
+unsigned int* tempretureRaw_ptr = &tempretureRaw;
+unsigned int* systolicPressRaw_ptr = &systolicPressRaw;
+unsigned int* diastolicPressRaw_ptr = &diastolicPressRaw;
+unsigned int* pulseRateRaw_ptr = &pulseRateRaw;
+unsigned char** tempCorrected_ptr = &tempCorrected;
+unsigned char** sysPressCorrected_ptr = &sysPressCorrected;
+unsigned char** diastolicPressCorrected_ptr = &diastolicPressCorrected;
+unsigned char** pulseRateCorrected_ptr = &pulseRateCorrected;
+unsigned short* batteryState_ptr = batteryState;
 
+TCB Blocks[5];
 
 void setup() {
   Serial.begin(9600);
@@ -83,10 +84,46 @@ void setup() {
   tft.fillScreen(BLACK);
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(2);
+
+  // measure tcb
+  void (*measure_ptr)(void*) = &measure;
+  MeasureData mData = {tempretureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr};
+  TCB meas = {measure_ptr, &mData};
+
+  // compute tcb
+  void (*compute_ptr)(void*) = &compute;
+  ComputeData cData = {tempretureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr, 
+                       tempCorrected_ptr, sysPressCorrected_ptr, diastolicPressCorrected_ptr, pulseRateCorrected_ptr};
+  TCB comp = {compute_ptr, &cData};
+
+  // display tcb
+  void (*display_ptr)(void*) = &displayF;
+  DisplayData dData = {tempCorrected_ptr, sysPressCorrected_ptr, diastolicPressCorrected_ptr, pulseRateCorrected_ptr, batteryState_ptr};
+  TCB disp = {display_ptr, &dData};
+  
+   // warning tcb
+  void (*warningAlarm_ptr)(void*) = &warningAlarm;
+  WarningAlarmData wData = {tempretureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr, batteryState_ptr};
+  TCB warn = {warningAlarm_ptr, &wData};
+
+  // status tcb
+   void (*status_ptr)(void*) = &statusF;
+   Status sData = {batteryState_ptr};
+   TCB stat = {status_ptr, &sData};
+  
+   blocks[0] = meas;
+   blocks[1] = comp;
+   blocks[2] = warn;
+   blocks[3] = disp;
+   blocks[4] = stat;
+
+   
 }
 
 
 void loop() {
   // put your main code here, to run repeatedly:
 
+  
+  scheduler(blocks);
 }

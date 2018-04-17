@@ -137,8 +137,9 @@ void issue(volatile int* count, int period, int which, TCB* blocks) {
 void scheduler(TCB* blocks) {
   issue(&mCount, mP, 0, blocks);
   issue(&cCount, cP, 1, blocks);
-  issue(&dCount, dP, 2, blocks);
-  issue(&wCount, wP, 3, blocks);
+  issue(&wCount, wP, 2, blocks);
+  issue(&dCount, dP, 3, blocks);
+ 
   issue(&sCount, sP, 4, blocks);
   delay(1000);
 }
