@@ -1,4 +1,33 @@
 #include "structures.h"
+// value initialization
+unsigned int temperatureRaw = 75;
+unsigned int systolicPressRaw = 80;
+unsigned int diastolicPressRaw = 80;
+unsigned int pulseRateRaw = 75;
+unsigned char* tempCorrected = NULL;
+unsigned char* systolicPressCorrected = NULL;
+unsigned char* diastolicPressCorrected = NULL;
+unsigned char* pulseRateCorrected = NULL;
+unsigned short batteryState = 200;
+// FIX ME
+unsigned char bpOutOfRange = 0;
+unsigned char tempOutOfRange = 0;
+unsigned char pulseOutOfRange = 0;
+Bool bpHigh = FALSE;
+Bool tempHigh = FALSE;
+Bool pulseLow = FALSE;
+
+// pointer initialization
+unsigned int* tempretureRaw = &tempretureRaw;
+unsigned int* systolicPressRaw = &systolicPressRaw;
+unsigned int* diastolicPressRaw = &diastolicPressRaw;
+unsigned int* pulseRateRaw = &pulseRateRaw;
+unsigned char** tempCorrected = &tempCorrected;
+unsigned char** sysPressCorrected = &sysPressCorrected;
+unsigned char** diastolicPressCorrected = &diastolicPressCorrected;
+unsigned char** pulseRateCorrected = &pulseRateCorrected;
+unsigned short* batteryState = batteryState;
+
 
 void setup() {
   Serial.begin(9600);
@@ -55,6 +84,7 @@ void setup() {
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(2);
 }
+
 
 void loop() {
   // put your main code here, to run repeatedly:

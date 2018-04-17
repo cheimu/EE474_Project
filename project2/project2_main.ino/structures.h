@@ -26,6 +26,7 @@ typedef enum myBool Bool;
 volatile static Bool times=EVEN;
 
 
+
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
 // event counters and period
@@ -53,17 +54,17 @@ typedef struct {
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
-  unsigned char* tempCorrected;
-  unsigned char* sysPressCorrected;
-  unsigned char* diastolicPressCorrected;
-  unsigned char* pulseRateCorrected;
+  unsigned char** tempCorrected;
+  unsigned char** sysPressCorrected;
+  unsigned char** diastolicPressCorrected;
+  unsigned char** pulseRateCorrected;
 } ComputeData;
 
 typedef struct {
-  unsigned char* tempCorrected;
-  unsigned char* sysPressCorrected;
-  unsigned char* diastolicPressCorrected;
-  unsigned char* pulseRateCorrected;
+  unsigned char** tempCorrected;
+  unsigned char** sysPressCorrected;
+  unsigned char** diastolicPressCorrected;
+  unsigned char** pulseRateCorrected;
   unsigned short* batteryState;
 } DisplayData;
 

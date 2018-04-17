@@ -68,41 +68,52 @@ void compute (void* data) {
 
 void dispalyF (void* data) {
   DisplayData* data_in = (DisplayData*) data;
-  /*
-  printf("Temperature: %sC", data->tempCorrected);
-  printf("Temperature: %smm Hg", data->sysPressCorrected);
-  printf("Temperature: %smm Hg", data->diastolicPressCorrected);
-  printf("Temperature: %sBPM", data->pulseRateCorrected);
-  printf("Temperature: %hu%%", data->batteryState);
-  */
+  tft.println("Temperature: " + data->tempCorrected " C");
+  tft.println("Temperature: " + data->sysPressCorrected + " mmHg");
+  tft.println("Temperature: " + data->diastolicPressCorrected + " mmHg");
+  tft.println("Temperature: " + data->pulseRateCorrected + " BPM");
+  tft.println("Temperature: " + data->batteryState + "%");
+  
 }
 
 void warningAlarm (void* data) {
   WarningAlarmData* data_in = (WarningAlarmData*) data;
   if (*(data_in->tempretureRaw) < 36.1 || *(data_in->tempretureRaw) > 37.8) {
-    //printf("You are Dead");
+    if (*(data_in->tempretureRaw) > 37.8) {
+      tempHigh = TRUE;  
+    }
+    tft.setTextColor(RED);
   } else {
-    //printf("(- w -)");
+    tempHigh = FALSE;
+    tft.setTextColor(GREEN);
+    
   }
-  if (*(data_in->systolicPressRaw) != 120) {
-    //printf("You are Dead");
+  if (*(data_in->systolicPressRaw) > 120) {
+    bpHigh = TRUE;
+    tft.setTextColor(RED);
   } else {
-    //printf("(- w -)");
+    bpHigh = FALSE;
+    tft.setTextColor(GREEN);
   }
-  if (*(data_in->diastolicPressRaw) != 80) {
-    //printf("You are Dead");
+  if (*(data_in->diastolicPressRaw) < 80) {
+    tft.setTextColor(RED);
   } else {
-    //printf("(- w -)"); 
+    tft.setTextColor(GREEN); 
   }
   if (*(data_in->pulseRateRaw) < 60  || *(data_in->pulseRateRaw) > 100  ) {
-    //printf("You are Dead");
+     if (*(data_in->pulseRateRaw) < 60) {
+      pulseLow = TRUE;  
+    }
+    tft.setTextColor(RED);
   } else {
-    //printf("(- w -)");
+    pulseLow = FALSE;
+    tft.setTextColor(GREEN);
+    
   }
   if (*(data_in->batteryState) < 20  ) {
-    //printf("You are Dead");
+    tft.setTextColor(RED);
   } else {
-    //printf("(- w -)"); 
+    tft.setTextColor(GREEN); 
   } 
 }
 
