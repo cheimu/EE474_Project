@@ -24,7 +24,9 @@ typedef enum myBool Bool;
 
 // even odd counts
 volatile static Bool times=EVEN;
-
+volatile static int tempUp=0;
+volatile static int pulseUp=0;
+volatile static int systoDone = 0;
 
 
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);

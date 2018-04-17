@@ -2,61 +2,82 @@
 
 void measure (void* data) {
   MeasureData* data_in = (MeasureData*) data;
-  
-  switch(times) {
-    case EVEN :
-      // temperatureRaw
-      if (*(data_in->tempretureRaw) < 50 && *(data_in->tempretureRaw) >= 15) {
-        *(data_in->tempretureRaw) += 2;
-      } else if (*(data_in->tempretureRaw) < 15) {
-        *(data_in->tempretureRaw) -= 2;
-      }
-      // systolicPressRaw or diastolicPressRaw
-      if (*(data_in->systolicPressRaw) <= 100) {
-          *(data_in->systolicPressRaw)+=3;
-      }else if (*(data_in->systolicPressRaw) > 100 && *(data_in->diastolicPressRaw) < 40) {
-        *(data_in->systolicPressRaw) = 80;
-        *(data_in->diastolicPressRaw) = 80;
-      } else if (*(data_in->systolicPressRaw) > 100 && *(data_in->diastolicPressRaw) >= 40) {
-        *(data_in->diastolicPressRaw) -= 2;  
-      }
-      
-      // pulseRateRaw
-      if (*(data_in->pulseRateRaw) < 40 && *(data_in->pulseRateRaw) >= 15) {
-        *(data_in->pulseRateRaw)--;
-      } else if (*(data_in->pulseRateRaw) < 15) {
-        *(data_in->tempretureRaw)++;
-      }
-      times = ODD;
-      break;
-    case ODD  :
-      if (*(data_in->tempretureRaw) < 50 && *(data_in->tempretureRaw) >= 15) {
-        *(data_in->tempretureRaw)--;
-      } else if (*(data_in->tempretureRaw) < 15) {
-        *(data_in->tempretureRaw)++;
-      }
-      
-      // systolicPressRaw or diastolicPressRaw
-      if (*(data_in->systolicPressRaw) <= 100) {
-          *(data_in->systolicPressRaw)--;
-      }else if (*(data_in->systolicPressRaw) > 100 && *(data_in->diastolicPressRaw) < 40) {
-        *(data_in->systolicPressRaw) = 80;
-        *(data_in->diastolicPressRaw) = 80;
-      } else if (*(data_in->systolicPressRaw) > 100 && *(data_in->diastolicPressRaw) >= 40) {
-        *(data_in->diastolicPressRaw)++; 
-      }
-      
-      // pulseRateRaw
-      if (*(data_in->pulseRateRaw) < 40 && *(data_in->pulseRateRaw) >= 15) {
-        *(data_in->pulseRateRaw) += 3;
-      } else if (*(data_in->pulseRateRaw) < 15) {
-        *(data_in->pulseRateRaw) -= 3;
-      }
-      times = EVEN;
-      break;
+  unsigned int temp = *(data_in->tempretureRaw);
+  if (temp > 50) {
+    tempUp = 0;
+  } else if (temp < 15) {
+    tempUp = 1;
   }
-  
+  if (tempUp == 1) {
+    if (times == EVEN) {
+        *(data_in->tempretureRaw) += 2;
+    } else {
+        *(data_in->tempretureRaw) -= 1;
+    }
+  } else {
+        if (times == EVEN) {
+        *(data_in->tempretureRaw) -= 2;
+    } else {
+        *(data_in->tempretureRaw) += 1;
+    }
+  }
+
+  unsigned int pulse = *(data_in->pulseRateRaw);
+  if (pulse > 40) {
+    pulseUp = 0;
+  } else if (pulse < 15) {
+    pulseUp = 1;
+  }
+
+  if (pulseUp) {
+    if (times == ODD) {
+        *(data_in->pulseRateRaw) += 3;
+    } else {
+        *(data_in->pulseRateRaw) -= 1;
+    }
+  } else {
+    if (times == ODD) {
+        *(data_in->pulseRateRaw) -= 3;
+    } else {
+        *(data_in->pulseRateRaw) += 1;
+    }
+  }
+
+
+
+    if (systoDone == 0) {
+        if (times == EVEN) {
+            *(data_in->systolicPressRaw) += 3;
+        } else {
+            *(data_in->systolicPressRaw) -= 1;
+        }
+        if (*(data_in->systolicPressRaw) > 100) {
+            systoDone = 1;
+            *(data_in->systolicPressRaw) = 80;
+        }
+    } else {
+        if (times == EVEN) {
+            *(data_in->diastolicPressRaw) -= 2;
+        } else {
+            *(data_in->diastolicPressRaw) += 1;
+        }
+        if (*(data_in->diastolicPressRaw) < 40) {
+            systoDone = 0;
+            *(data_in->diastolicPressRaw) = 80;
+        }
+    }
+
+
+
+
+  if (times == EVEN) {
+    times = ODD;
+  } else {
+    times = EVEN;
+  }
+
 }
+
 
 void compute (void* data) {
   ComputeData* data_in = (ComputeData*) data;
