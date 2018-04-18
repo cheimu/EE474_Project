@@ -7,7 +7,6 @@ void intToChar(unsigned char* result , int num) {
 }
 
 void measure (void* data) {
-  tft.print("in meausure\n");
   MeasureData* data_in = (MeasureData*) data;
   unsigned int temp = *(data_in->temperatureRaw);
   if (temp > 50) {
@@ -73,10 +72,7 @@ void measure (void* data) {
             *(data_in->diastolicPressRaw) = 80;
         }
     }
-
-
-
-
+ 
   if (times == EVEN) {
     times = ODD;
   } else {
@@ -98,24 +94,34 @@ void compute (void* data) {
 }
 
 void displayF (void* data) {
-  
+  tft.fillScreen(BLACK);
+  tft.setCursor(0,0);
+  tft.print("   E-Doc: Your Private Doctor (^ w ^)   ");
   DisplayData* data_in = (DisplayData*) data;
-  tft.print("Temperature: ");
-  tft.print(*data_in->tempCorrected);
-  tft.println(" C");
-  tft.print("Systolic Pressure: ");
-  tft.print(*data_in->sysPressCorrected);
-  tft.println(" mmHg");
-  tft.print("Diastolic Pressure: ");
-  tft.print(*data_in->diastolicPressCorrected);
-  tft.println(" mmHg");
-  tft.print("Pulse Rate: ");
-  tft.print(*data_in->pulseRateCorrected);
-  tft.println(" BPM");
-  tft.print("Battery: ");
-  tft.print(*data_in->batteryState);
-  tft.println("%");
-  
+  tft.print("|--------------------------------------|");
+  tft.print("|                                      |");
+  tft.print("| Temperature: ");
+  tft.print((char*) data_in->tempCorrected);
+  tft.print(" C                    |");
+  tft.print("|                                      |");
+  tft.print("| Systolic Pressure: ");
+  tft.print((char*) data_in->sysPressCorrected);
+  tft.print(" mmHg            |");
+  tft.print("|                                      |");
+  tft.print("| Diastolic Pressure: ");
+  tft.print((char*)data_in->diastolicPressCorrected);
+  tft.print(" mmHg         |");
+  tft.print("|                                      |");
+  tft.print("| Pulse Rate: ");
+  tft.print((char*)data_in->pulseRateCorrected);
+  tft.print(" BPM                   |");
+  tft.print("|                                      |");
+  tft.print("| Battery: ");
+  tft.print((char*)data_in->batteryState);
+  tft.print("%                        |");
+  tft.print("|                                      |");
+  tft.print("|--------------------------------------|");
+  tft.print("     We hope you are in good health!    ");
 }
 
 void warningAlarm (void* data) {
@@ -161,7 +167,7 @@ void warningAlarm (void* data) {
 
 void statusF (void* data) {
   Status* data_in = (Status*) data;
-  *(data_in->batteryState)--;
+  *(data_in->batteryState)-=1;
 }
 
 // precondition: there are five blocks in TCB array
@@ -172,7 +178,7 @@ void issue(volatile int* count, int period, int which, TCB* blocks) {
   if (*count == period) {
     *count = 0;
   } else {
-    *count++;
+    *count+=1;
   }
 }
 
