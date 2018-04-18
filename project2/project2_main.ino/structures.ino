@@ -3,11 +3,6 @@
 void measure (void* data) {
   MeasureData* data_in = (MeasureData*) data;
   unsigned int temp = *(data_in->temperatureRaw);
-  Serial.print("temp is :");
-  Serial.print(*(data_in->temperatureRaw));
-  Serial.print(" ");
-  Serial.print(temp);
-  Serial.print("\n");
   if (temp > 50) {
     tempUp = 0;
   } else if (temp < 15) {
@@ -71,9 +66,6 @@ void measure (void* data) {
             *(data_in->diastolicPressRaw) = 80;
         }
     }
-   Serial.print("modified is ");
-   Serial.print(*(data_in->temperatureRaw));
-
   if (times == EVEN) {
     times = ODD;
   } else {
@@ -109,25 +101,34 @@ void displayF (void* data) {
   tft.print("|--------------------------------------|");
   tft.print("|                                      |");
   tft.print("| Temperature: ");
-  tft.print((char) data_in->tempCorrected[0]);
   tft.print((char) data_in->tempCorrected[1]);
   tft.print((char) data_in->tempCorrected[2]);
   tft.print(" C                    |");
   tft.print("|                                      |");
   tft.print("| Systolic Pressure: ");
-  tft.print((char*) data_in->sysPressCorrected);
-  tft.print(" mmHg            |");
+  tft.print((char) data_in->sysPressCorrected[0]);
+  tft.print((char) data_in->sysPressCorrected[1]);
+  tft.print((char) data_in->sysPressCorrected[2]);
+  tft.print(" mmHg          |");
   tft.print("|                                      |");
   tft.print("| Diastolic Pressure: ");
-  tft.print((char*)data_in->diastolicPressCorrected);
+  tft.print((char)data_in->diastolicPressCorrected[0]);
+  tft.print((char)data_in->diastolicPressCorrected[0]);
+  tft.print((char)data_in->diastolicPressCorrected[0]);
   tft.print(" mmHg         |");
   tft.print("|                                      |");
   tft.print("| Pulse Rate: ");
-  tft.print((char*)data_in->pulseRateCorrected);
-  tft.print(" BPM                   |");
+  tft.print((char)data_in->pulseRateCorrected[0]);
+  tft.print((char)data_in->pulseRateCorrected[1]);
+  tft.print((char)data_in->pulseRateCorrected[2]);
+  tft.print(" BPM                  |");
   tft.print("|                                      |");
   tft.print("| Battery: ");
-  tft.print((char*)data_in->batteryState);
+  unsigned char battery[3];
+  intToChar(battery, (int)*(data_in->batteryState));
+  tft.print((char)battery[0]);
+  tft.print((char)battery[1]);
+  tft.print((char)battery[2]);
   tft.print("%                        |");
   tft.print("|                                      |");
   tft.print("|--------------------------------------|");
@@ -177,7 +178,7 @@ void warningAlarm (void* data) {
 
 void statusF (void* data) {
   Status* data_in = (Status*) data;
-  *(data_in->batteryState)-=1;
+  *(data_in->batteryState) -= 1;
 }
 
 // precondition: there are five blocks in TCB array
