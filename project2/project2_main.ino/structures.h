@@ -20,10 +20,12 @@
 #define WHITE   0xFFFF
 
 enum myBool { EVEN = 0, ODD = 1 };
-typedef enum myBool Bool;
+typedef enum myBool Even_ODD;
+enum myBool2 {FALSE = 0, TRUE = 1};
+typedef enum myBool2 Bool;
 
 // even odd counts
-volatile static Bool times=EVEN;
+volatile static Even_ODD times=EVEN;
 volatile static int tempUp=0;
 volatile static int pulseUp=0;
 volatile static int systoDone = 0;
@@ -45,33 +47,33 @@ volatile int sCount=0;
 #define sP 4
 
 typedef struct {
-  unsigned int* tempretureRaw;
+  unsigned int* temperatureRaw;
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
 } MeasureData;
 
 typedef struct {
-  unsigned int* tempretureRaw;
+  unsigned int* temperatureRaw;
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
-  unsigned char** tempCorrected;
-  unsigned char** sysPressCorrected;
-  unsigned char** diastolicPressCorrected;
-  unsigned char** pulseRateCorrected;
+  unsigned char* tempCorrected;
+  unsigned char* sysPressCorrected;
+  unsigned char* diastolicPressCorrected;
+  unsigned char* pulseRateCorrected;
 } ComputeData;
 
 typedef struct {
-  unsigned char** tempCorrected;
-  unsigned char** sysPressCorrected;
-  unsigned char** diastolicPressCorrected;
-  unsigned char** pulseRateCorrected;
+  unsigned char* tempCorrected;
+  unsigned char* sysPressCorrected;
+  unsigned char* diastolicPressCorrected;
+  unsigned char* pulseRateCorrected;
   unsigned short* batteryState;
 } DisplayData;
 
 typedef struct {
-  unsigned int* tempretureRaw;
+  unsigned int* temperatureRaw;
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
@@ -81,9 +83,6 @@ typedef struct {
 typedef struct {
   unsigned short* batteryState;
 } Status;
-
-typedef struct {
-} SchedulerData;
 
 typedef struct {
   void (*myTask)(void*);

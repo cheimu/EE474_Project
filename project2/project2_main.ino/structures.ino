@@ -1,8 +1,15 @@
 #include "structures.h"
 
+void intToChar(unsigned char* result , int num) {
+  result[0] = (unsigned char) (num / 100 + 48);
+  result[1] = (unsigned char) (num % 100 / 10 + 48);
+  result[2] = (unsigned char) (num % 10 + 48);
+}
+
 void measure (void* data) {
+  tft.print("in meausure\n");
   MeasureData* data_in = (MeasureData*) data;
-  unsigned int temp = *(data_in->tempretureRaw);
+  unsigned int temp = *(data_in->temperatureRaw);
   if (temp > 50) {
     tempUp = 0;
   } else if (temp < 15) {
@@ -10,15 +17,15 @@ void measure (void* data) {
   }
   if (tempUp == 1) {
     if (times == EVEN) {
-        *(data_in->tempretureRaw) += 2;
+        *(data_in->temperatureRaw) += 2;
     } else {
-        *(data_in->tempretureRaw) -= 1;
+        *(data_in->temperatureRaw) -= 1;
     }
   } else {
         if (times == EVEN) {
-        *(data_in->tempretureRaw) -= 2;
+        *(data_in->temperatureRaw) -= 2;
     } else {
-        *(data_in->tempretureRaw) += 1;
+        *(data_in->temperatureRaw) += 1;
     }
   }
 
@@ -75,32 +82,46 @@ void measure (void* data) {
   } else {
     times = EVEN;
   }
-
 }
 
 
 void compute (void* data) {
   ComputeData* data_in = (ComputeData*) data;
-  *(data_in->tempCorrected) = 5 + 0.75 * *(data_in->tempretureRaw);
-  *(data_in->sysPressCorrected) = 9 + 2 * *(data_in->systolicPressRaw);
-  *(data_in->diastolicPressCorrected) = 6 + 1.5 * *(data_in->diastolicPressRaw);
-  *(data_in->pulseRateCorrected) = 8 + 3 * *(data_in->pulseRateRaw);  
+  int tempFixed = 5 + 0.75 * *(data_in->temperatureRaw);
+  int systoFixed = 9 + 2 * *(data_in->systolicPressRaw);
+  int diasFixed = 6 + 1.5 * *(data_in->diastolicPressRaw);
+  int pulseFixed = 8 + 3 * *(data_in->pulseRateRaw);
+  intToChar(data_in->tempCorrected, tempFixed); 
+  intToChar(data_in->sysPressCorrected, systoFixed); 
+  intToChar(data_in->diastolicPressCorrected, diasFixed); 
+  intToChar(data_in->pulseRateCorrected, pulseFixed);
 }
 
-void dispalyF (void* data) {
+void displayF (void* data) {
+  
   DisplayData* data_in = (DisplayData*) data;
-  tft.println("Temperature: " + data->tempCorrected " C");
-  tft.println("Temperature: " + data->sysPressCorrected + " mmHg");
-  tft.println("Temperature: " + data->diastolicPressCorrected + " mmHg");
-  tft.println("Temperature: " + data->pulseRateCorrected + " BPM");
-  tft.println("Temperature: " + data->batteryState + "%");
+  tft.print("Temperature: ");
+  tft.print(*data_in->tempCorrected);
+  tft.println(" C");
+  tft.print("Systolic Pressure: ");
+  tft.print(*data_in->sysPressCorrected);
+  tft.println(" mmHg");
+  tft.print("Diastolic Pressure: ");
+  tft.print(*data_in->diastolicPressCorrected);
+  tft.println(" mmHg");
+  tft.print("Pulse Rate: ");
+  tft.print(*data_in->pulseRateCorrected);
+  tft.println(" BPM");
+  tft.print("Battery: ");
+  tft.print(*data_in->batteryState);
+  tft.println("%");
   
 }
 
 void warningAlarm (void* data) {
   WarningAlarmData* data_in = (WarningAlarmData*) data;
-  if (*(data_in->tempretureRaw) < 36.1 || *(data_in->tempretureRaw) > 37.8) {
-    if (*(data_in->tempretureRaw) > 37.8) {
+  if (*(data_in->temperatureRaw) < 36.1 || *(data_in->temperatureRaw) > 37.8) {
+    if (*(data_in->temperatureRaw) > 37.8) {
       tempHigh = TRUE;  
     }
     tft.setTextColor(RED);
