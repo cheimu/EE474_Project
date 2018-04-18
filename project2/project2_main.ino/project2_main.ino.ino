@@ -1,18 +1,18 @@
 #include "structures.h"
 // value initialization
-volatile unsigned int temperatureRaw = 75;
-volatile unsigned int systolicPressRaw = 80;
-volatile unsigned int diastolicPressRaw = 80;
-volatile unsigned int pulseRateRaw = 75;
-volatile unsigned char tempCorrected[3];
-volatile unsigned char systolicPressCorrected[3];
-volatile unsigned char diastolicPressCorrected[3];
-volatile unsigned char pulseRateCorrected [3];
-volatile unsigned short batteryState = 200;
+unsigned int temperatureRaw = 75;
+unsigned int systolicPressRaw = 80;
+unsigned int diastolicPressRaw = 80;
+unsigned int pulseRateRaw = 75;
+unsigned char tempCorrected[3];
+unsigned char systolicPressCorrected[3];
+unsigned char diastolicPressCorrected[3];
+unsigned char pulseRateCorrected [3];
+unsigned short batteryState = 200;
 // FIX ME
-volatile unsigned char bpOutOfRange = 0;
-volatile unsigned char tempOutOfRange = 0;
-volatile unsigned char pulseOutOfRange = 0;
+unsigned char bpOutOfRange = 0;
+unsigned char tempOutOfRange = 0;
+unsigned char pulseOutOfRange = 0;
 Bool bpHigh = FALSE;
 Bool tempHigh = FALSE;
 Bool pulseLow = FALSE;
@@ -85,7 +85,11 @@ void setup() {
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(1);
 
-  // measure tcb
+ 
+}
+
+void loop() {
+   // measure tcb
   void (*measure_ptr)(void*) = &measure;
   MeasureData mData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr};
   TCB meas = {measure_ptr, &mData};
@@ -116,21 +120,12 @@ void setup() {
    blocks[2] = warn;
    blocks[3] = disp;
    blocks[4] = stat;
-   
-   int i;
-   for (i = 0; i < 200; i++) {
-      scheduler(blocks);
-      delay(1000);
-   }
-   
-}
-
-
-void loop() {
   
-  scheduler(blocks);
-  delay(1000);
+   scheduler(blocks);
   
 
   //Serial.print((char*)tempCorrected);
 }
+
+
+

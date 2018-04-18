@@ -1,14 +1,13 @@
 #include "structures.h"
 
-void intToChar(unsigned char* result , int num) {
-  result[0] = (unsigned char) (num / 100 + 48);
-  result[1] = (unsigned char) (num % 100 / 10 + 48);
-  result[2] = (unsigned char) (num % 10 + 48);
-}
-
 void measure (void* data) {
   MeasureData* data_in = (MeasureData*) data;
   unsigned int temp = *(data_in->temperatureRaw);
+  Serial.print("temp is :");
+  Serial.print(*(data_in->temperatureRaw));
+  Serial.print(" ");
+  Serial.print(temp);
+  Serial.print("\n");
   if (temp > 50) {
     tempUp = 0;
   } else if (temp < 15) {
@@ -27,7 +26,7 @@ void measure (void* data) {
         *(data_in->temperatureRaw) += 1;
     }
   }
-
+  
   unsigned int pulse = *(data_in->pulseRateRaw);
   if (pulse > 40) {
     pulseUp = 0;
@@ -72,13 +71,22 @@ void measure (void* data) {
             *(data_in->diastolicPressRaw) = 80;
         }
     }
- 
+   Serial.print("modified is ");
+   Serial.print(*(data_in->temperatureRaw));
+
   if (times == EVEN) {
     times = ODD;
   } else {
     times = EVEN;
   }
 }
+
+void intToChar(unsigned char* result , int num) {
+  result[0] = (unsigned char) (num / 100 + 48);
+  result[1] = (unsigned char) (num % 100 / 10 + 48);
+  result[2] = (unsigned char) (num % 10 + 48);
+}
+
 
 
 void compute (void* data) {
@@ -101,7 +109,9 @@ void displayF (void* data) {
   tft.print("|--------------------------------------|");
   tft.print("|                                      |");
   tft.print("| Temperature: ");
-  tft.print((char*) data_in->tempCorrected);
+  tft.print((char) data_in->tempCorrected[0]);
+  tft.print((char) data_in->tempCorrected[1]);
+  tft.print((char) data_in->tempCorrected[2]);
   tft.print(" C                    |");
   tft.print("|                                      |");
   tft.print("| Systolic Pressure: ");

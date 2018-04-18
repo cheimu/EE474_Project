@@ -1,7 +1,7 @@
 #ifndef STRUCT
 #define STRUCT
-#include <Elegoo_GFX.h>
-#include <Elegoo_TFTLCD.h>
+#include "Elegoo_GFX.h"
+#include "Elegoo_TFTLCD.h"
 
 // pin assignments
 #define LCD_CS A3 // Chip Select goes to Analog 3
