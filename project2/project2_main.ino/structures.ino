@@ -231,7 +231,9 @@ void warningAlarm (void* data) {
 
 void statusF (void* data) {
   Status* data_in = (Status*) data;
-  *(data_in->batteryState) -= 1;
+  if (data_in->batteryState > 0) {
+    *(data_in->batteryState) -= 1;
+  }
 }
 
 // precondition: there are five blocks in TCB array
