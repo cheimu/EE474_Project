@@ -13,9 +13,11 @@ unsigned short batteryState = 200;
 unsigned char bpOutOfRange = 0;
 unsigned char tempOutOfRange = 0;
 unsigned char pulseOutOfRange = 0;
+unsigned char diasOutOfRange = 0;
 Bool bpHigh = FALSE;
 Bool tempHigh = FALSE;
 Bool pulseLow = FALSE;
+Bool lowPower = FALSE;
 
 // pointer values
 unsigned int* temperatureRaw_ptr = &temperatureRaw;
@@ -121,8 +123,6 @@ void setup() {
    blocks[3] = disp;
    blocks[4] = stat;
 }
-
-
 
 void loop() {  
    scheduler(blocks);

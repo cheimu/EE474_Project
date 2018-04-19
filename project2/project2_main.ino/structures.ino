@@ -87,42 +87,82 @@ void compute (void* data) {
   int systoFixed = 9 + 2 * *(data_in->systolicPressRaw);
   int diasFixed = 6 + 1.5 * *(data_in->diastolicPressRaw);
   int pulseFixed = 8 + 3 * *(data_in->pulseRateRaw);
+  
   intToChar(data_in->tempCorrected, tempFixed); 
   intToChar(data_in->sysPressCorrected, systoFixed); 
   intToChar(data_in->diastolicPressCorrected, diasFixed); 
   intToChar(data_in->pulseRateCorrected, pulseFixed);
+ 
 }
 
 void displayF (void* data) {
+  // calculate whethether systolic or diastolic pressure is out of range
+
+  
   tft.fillScreen(BLACK);
   tft.setCursor(0,0);
   tft.print("   E-Doc: Your Private Doctor (^ w ^)   ");
   DisplayData* data_in = (DisplayData*) data;
   tft.print("|--------------------------------------|");
   tft.print("|                                      |");
+  // print temperature
+  if (tempOutOfRange == 1) {
+    tft.setTextColor(RED);
+  } else {
+    tft.setTextColor(GREEN); 
+  }
   tft.print("| Temperature: ");
   tft.print((char) data_in->tempCorrected[1]);
   tft.print((char) data_in->tempCorrected[2]);
   tft.print(" C                    |");
+  tft.setTextColor(GREEN); 
   tft.print("|                                      |");
+  // print systolic pressure
+  if (bpHigh == TRUE) {
+    tft.setTextColor(RED);  
+  } else {
+    tft.setTextColor(GREEN);  
+  }
   tft.print("| Systolic Pressure: ");
   tft.print((char) data_in->sysPressCorrected[0]);
   tft.print((char) data_in->sysPressCorrected[1]);
   tft.print((char) data_in->sysPressCorrected[2]);
   tft.print(" mmHg          |");
+  tft.setTextColor(GREEN); 
   tft.print("|                                      |");
+  // print diastolic pressure
+  if (diasOutOfRange == 1) {
+    tft.setTextColor(RED);  
+  } else {
+    tft.setTextColor(GREEN);
+  }
   tft.print("| Diastolic Pressure: ");
   tft.print((char)data_in->diastolicPressCorrected[0]);
-  tft.print((char)data_in->diastolicPressCorrected[0]);
-  tft.print((char)data_in->diastolicPressCorrected[0]);
+  tft.print((char)data_in->diastolicPressCorrected[1]);
+  tft.print((char)data_in->diastolicPressCorrected[2]);
   tft.print(" mmHg         |");
+  tft.setTextColor(GREEN); 
   tft.print("|                                      |");
+  
+  // print pulse rate
+  if (pulseOutOfRange == 1) {
+    tft.setTextColor(RED);  
+  } else {
+    tft.setTextColor(GREEN);  
+  }
   tft.print("| Pulse Rate: ");
   tft.print((char)data_in->pulseRateCorrected[0]);
   tft.print((char)data_in->pulseRateCorrected[1]);
   tft.print((char)data_in->pulseRateCorrected[2]);
   tft.print(" BPM                  |");
+  tft.setTextColor(GREEN); 
   tft.print("|                                      |");
+  // print battery status
+  if (lowPower == TRUE) {
+    tft.setTextColor(RED);  
+  } else {
+    tft.setTextColor(GREEN);  
+  }
   tft.print("| Battery: ");
   unsigned char battery[3];
   intToChar(battery, (int)*(data_in->batteryState));
@@ -130,6 +170,7 @@ void displayF (void* data) {
   tft.print((char)battery[1]);
   tft.print((char)battery[2]);
   tft.print("%                        |");
+  tft.setTextColor(GREEN); 
   tft.print("|                                      |");
   tft.print("|--------------------------------------|");
   tft.print("     We hope you are in good health!    ");
@@ -137,42 +178,59 @@ void displayF (void* data) {
 
 void warningAlarm (void* data) {
   WarningAlarmData* data_in = (WarningAlarmData*) data;
-  if (*(data_in->temperatureRaw) < 36.1 || *(data_in->temperatureRaw) > 37.8) {
+  int tempFixed = 5 + 0.75 * *(data_in->temperatureRaw);
+  int systoFixed = 9 + 2 * *(data_in->systolicPressRaw);
+  int diasFixed = 6 + 1.5 * *(data_in->diastolicPressRaw);
+  int pulseFixed = 8 + 3 * *(data_in->pulseRateRaw);
+ 
+
+  // temperature
+  if (tempFixed < 36.1 || tempFixed > 37.8) {
+    tempOutOfRange = 1;
     if (*(data_in->temperatureRaw) > 37.8) {
       tempHigh = TRUE;  
     }
-    tft.setTextColor(RED);
   } else {
-    tempHigh = FALSE;
-    tft.setTextColor(GREEN);
-    
+    tempOutOfRange = 0;
+    tempHigh = FALSE;  
   }
-  if (*(data_in->systolicPressRaw) > 120) {
-    bpHigh = TRUE;
-    tft.setTextColor(RED);
+  // systolic pressrue
+  if (systoFixed > 120 || diasFixed < 80) {
+    bpOutOfRange = 1;
+ 
+    if (diasFixed < 80) {
+      diasOutOfRange = 1;  
+    } else {
+      diasOutOfRange = 0;  
+    }
+    if (systoFixed > 120) {
+      bpHigh = TRUE;
+    } else {
+      bpHigh = FALSE;  
+    }
   } else {
+    bpOutOfRange = 0;
+    diasOutOfRange = 0;
     bpHigh = FALSE;
-    tft.setTextColor(GREEN);
+
   }
-  if (*(data_in->diastolicPressRaw) < 80) {
-    tft.setTextColor(RED);
-  } else {
-    tft.setTextColor(GREEN); 
-  }
-  if (*(data_in->pulseRateRaw) < 60  || *(data_in->pulseRateRaw) > 100  ) {
-     if (*(data_in->pulseRateRaw) < 60) {
+
+  if (pulseFixed < 60  || pulseFixed > 100) {
+    pulseOutOfRange = 1;
+     if (pulseFixed < 60) {
       pulseLow = TRUE;  
     }
-    tft.setTextColor(RED);
+
   } else {
+    pulseOutOfRange = 0;
     pulseLow = FALSE;
-    tft.setTextColor(GREEN);
+
     
   }
   if (*(data_in->batteryState) < 20  ) {
-    tft.setTextColor(RED);
+    lowPower = TRUE;
   } else {
-    tft.setTextColor(GREEN); 
+    lowPower = FALSE;
   } 
 }
 
