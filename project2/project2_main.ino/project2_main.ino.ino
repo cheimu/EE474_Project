@@ -9,7 +9,6 @@ unsigned char systolicPressCorrected[3];
 unsigned char diastolicPressCorrected[3];
 unsigned char pulseRateCorrected [3];
 unsigned short batteryState = 200;
-// FIX ME
 unsigned char bpOutOfRange = 0;
 unsigned char tempOutOfRange = 0;
 unsigned char pulseOutOfRange = 0;
@@ -58,8 +57,8 @@ void setup() {
 
   tft.reset();
 
-   uint16_t identifier = tft.readID();
-   if(identifier == 0x9325) {
+  uint16_t identifier = tft.readID();
+  if(identifier == 0x9325) {
     Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9328) {
     Serial.println(F("Found ILI9328 LCD driver"));
@@ -71,15 +70,13 @@ void setup() {
     Serial.println(F("Found ILI9341 LCD driver"));
   } else if(identifier == 0x8357) {
     Serial.println(F("Found HX8357D LCD driver"));
-  } else if(identifier==0x0101)
-  {     
+  } else if(identifier==0x0101) {
       identifier=0x9341;
-       Serial.println(F("Found 0x9341 LCD driver"));
+      Serial.println(F("Found 0x9341 LCD driver"));
   }
-  else if(identifier==0x1111)
-  {     
+  else if(identifier==0x1111) {
       identifier=0x9328;
-       Serial.println(F("Found 0x9328 LCD driver"));
+      Serial.println(F("Found 0x9328 LCD driver"));
   }
   else {
     Serial.print(F("Unknown LCD driver chip: "));
@@ -91,7 +88,6 @@ void setup() {
     Serial.println(F("Also if using the breakout, double-check that all wiring"));
     Serial.println(F("matches the tutorial."));
     identifier=0x9328;
-  
   }
   tft.begin(identifier);
   tft.fillScreen(BLACK);
@@ -100,8 +96,9 @@ void setup() {
   // measure tcb
   mData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr};
   meas = {&measure, &mData};
+
   // compute tcb
-  cData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr, 
+  cData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr,
                        tempCorrected_ptr, sysPressCorrected_ptr, diastolicPressCorrected_ptr, pulseRateCorrected_ptr};
   comp = {&compute, &cData};
 
@@ -113,20 +110,17 @@ void setup() {
   wData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr, batteryState_ptr};
   warn = {&warningAlarm, &wData};
 
-   // status tcb
-   sData = {batteryState_ptr};
-   stat = {&statusF, &sData};
-  
-   blocks[0] = meas;
-   blocks[1] = comp;
-   blocks[2] = warn;
-   blocks[3] = disp;
-   blocks[4] = stat;
+  // status tcb
+  sData = {batteryState_ptr};
+  stat = {&statusF, &sData};
+
+  blocks[0] = meas;
+  blocks[1] = comp;
+  blocks[2] = warn;
+  blocks[3] = disp;
+  blocks[4] = stat;
 }
 
-void loop() {  
+void loop() {
    scheduler(blocks);
 }
-
-
-

@@ -21,7 +21,6 @@ void measure (void* data) {
         *(data_in->temperatureRaw) += 1;
     }
   }
-  
   unsigned int pulse = *(data_in->pulseRateRaw);
   if (pulse > 40) {
     pulseUp = 0;
@@ -42,30 +41,27 @@ void measure (void* data) {
         *(data_in->pulseRateRaw) += 1;
     }
   }
-
-
-
-    if (systoDone == 0) {
-        if (times == EVEN) {
-            *(data_in->systolicPressRaw) += 3;
-        } else {
-            *(data_in->systolicPressRaw) -= 1;
-        }
-        if (*(data_in->systolicPressRaw) > 100) {
-            systoDone = 1;
-            *(data_in->systolicPressRaw) = 80;
-        }
-    } else {
-        if (times == EVEN) {
-            *(data_in->diastolicPressRaw) -= 2;
-        } else {
-            *(data_in->diastolicPressRaw) += 1;
-        }
-        if (*(data_in->diastolicPressRaw) < 40) {
-            systoDone = 0;
-            *(data_in->diastolicPressRaw) = 80;
-        }
-    }
+  if (systoDone == 0) {
+      if (times == EVEN) {
+          *(data_in->systolicPressRaw) += 3;
+      } else {
+          *(data_in->systolicPressRaw) -= 1;
+      }
+      if (*(data_in->systolicPressRaw) > 100) {
+          systoDone = 1;
+          *(data_in->systolicPressRaw) = 80;
+      }
+  } else {
+      if (times == EVEN) {
+          *(data_in->diastolicPressRaw) -= 2;
+      } else {
+          *(data_in->diastolicPressRaw) += 1;
+      }
+      if (*(data_in->diastolicPressRaw) < 40) {
+          systoDone = 0;
+          *(data_in->diastolicPressRaw) = 80;
+      }
+  }
   if (times == EVEN) {
     times = ODD;
   } else {
@@ -87,52 +83,53 @@ void compute (void* data) {
   int systoFixed = 9 + 2 * *(data_in->systolicPressRaw);
   int diasFixed = 6 + 1.5 * *(data_in->diastolicPressRaw);
   int pulseFixed = 8 + 3 * *(data_in->pulseRateRaw);
-  
-  intToChar(data_in->tempCorrected, tempFixed); 
-  intToChar(data_in->sysPressCorrected, systoFixed); 
-  intToChar(data_in->diastolicPressCorrected, diasFixed); 
+
+  intToChar(data_in->tempCorrected, tempFixed);
+  intToChar(data_in->sysPressCorrected, systoFixed);
+  intToChar(data_in->diastolicPressCorrected, diasFixed);
   intToChar(data_in->pulseRateCorrected, pulseFixed);
- 
+
 }
 
 void displayF (void* data) {
   // calculate whethether systolic or diastolic pressure is out of range
-
-  
   tft.fillScreen(BLACK);
   tft.setCursor(0,0);
   tft.print("   E-Doc: Your Private Doctor (^ w ^)   ");
   DisplayData* data_in = (DisplayData*) data;
   tft.print("|--------------------------------------|");
   tft.print("|                                      |");
+
   // print temperature
   if (tempOutOfRange == 1) {
     tft.setTextColor(RED);
   } else {
-    tft.setTextColor(GREEN); 
+    tft.setTextColor(GREEN);
   }
   tft.print("| Temperature: ");
   tft.print((char) data_in->tempCorrected[1]);
   tft.print((char) data_in->tempCorrected[2]);
   tft.print(" C                    |");
-  tft.setTextColor(GREEN); 
+  tft.setTextColor(GREEN);
   tft.print("|                                      |");
+
   // print systolic pressure
   if (bpHigh == TRUE) {
-    tft.setTextColor(RED);  
+    tft.setTextColor(RED);
   } else {
-    tft.setTextColor(GREEN);  
+    tft.setTextColor(GREEN);
   }
   tft.print("| Systolic Pressure: ");
   tft.print((char) data_in->sysPressCorrected[0]);
   tft.print((char) data_in->sysPressCorrected[1]);
   tft.print((char) data_in->sysPressCorrected[2]);
   tft.print(" mmHg          |");
-  tft.setTextColor(GREEN); 
+  tft.setTextColor(GREEN);
   tft.print("|                                      |");
+
   // print diastolic pressure
   if (diasOutOfRange == 1) {
-    tft.setTextColor(RED);  
+    tft.setTextColor(RED);
   } else {
     tft.setTextColor(GREEN);
   }
@@ -141,27 +138,27 @@ void displayF (void* data) {
   tft.print((char)data_in->diastolicPressCorrected[1]);
   tft.print((char)data_in->diastolicPressCorrected[2]);
   tft.print(" mmHg         |");
-  tft.setTextColor(GREEN); 
+  tft.setTextColor(GREEN);
   tft.print("|                                      |");
-  
+
   // print pulse rate
   if (pulseOutOfRange == 1) {
-    tft.setTextColor(RED);  
+    tft.setTextColor(RED);
   } else {
-    tft.setTextColor(GREEN);  
+    tft.setTextColor(GREEN);
   }
   tft.print("| Pulse Rate: ");
   tft.print((char)data_in->pulseRateCorrected[0]);
   tft.print((char)data_in->pulseRateCorrected[1]);
   tft.print((char)data_in->pulseRateCorrected[2]);
   tft.print(" BPM                  |");
-  tft.setTextColor(GREEN); 
+  tft.setTextColor(GREEN);
   tft.print("|                                      |");
   // print battery status
   if (lowPower == TRUE) {
-    tft.setTextColor(RED);  
+    tft.setTextColor(RED);
   } else {
-    tft.setTextColor(GREEN);  
+    tft.setTextColor(GREEN);
   }
   tft.print("| Battery: ");
   unsigned char battery[3];
@@ -170,7 +167,7 @@ void displayF (void* data) {
   tft.print((char)battery[1]);
   tft.print((char)battery[2]);
   tft.print("%                        |");
-  tft.setTextColor(GREEN); 
+  tft.setTextColor(GREEN);
   tft.print("|                                      |");
   tft.print("|--------------------------------------|");
   tft.print("     We hope you are in good health!    ");
@@ -182,56 +179,54 @@ void warningAlarm (void* data) {
   int systoFixed = 9 + 2 * *(data_in->systolicPressRaw);
   int diasFixed = 6 + 1.5 * *(data_in->diastolicPressRaw);
   int pulseFixed = 8 + 3 * *(data_in->pulseRateRaw);
- 
 
-  // temperature
+  // Temperature
   if (tempFixed < 36.1 || tempFixed > 37.8) {
     tempOutOfRange = 1;
     if (*(data_in->temperatureRaw) > 37.8) {
-      tempHigh = TRUE;  
+      tempHigh = TRUE;
     }
   } else {
     tempOutOfRange = 0;
-    tempHigh = FALSE;  
+    tempHigh = FALSE;
   }
-  // systolic pressrue
+
+  // BP
   if (systoFixed > 120 || diasFixed < 80) {
     bpOutOfRange = 1;
- 
     if (diasFixed < 80) {
-      diasOutOfRange = 1;  
+      diasOutOfRange = 1;
     } else {
-      diasOutOfRange = 0;  
+      diasOutOfRange = 0;
     }
     if (systoFixed > 120) {
       bpHigh = TRUE;
     } else {
-      bpHigh = FALSE;  
+      bpHigh = FALSE;
     }
   } else {
     bpOutOfRange = 0;
     diasOutOfRange = 0;
     bpHigh = FALSE;
-
   }
 
+  // Palse Rate
   if (pulseFixed < 60  || pulseFixed > 100) {
     pulseOutOfRange = 1;
      if (pulseFixed < 60) {
-      pulseLow = TRUE;  
+      pulseLow = TRUE;
     }
-
   } else {
     pulseOutOfRange = 0;
     pulseLow = FALSE;
-
-    
   }
+
+  // Battery
   if (*(data_in->batteryState) < 20  ) {
     lowPower = TRUE;
   } else {
     lowPower = FALSE;
-  } 
+  }
 }
 
 void statusF (void* data) {
@@ -256,8 +251,6 @@ void scheduler(TCB* blocks) {
   issue(&cCount, cP, 1, blocks);
   issue(&wCount, wP, 2, blocks);
   issue(&dCount, dP, 3, blocks);
- 
   issue(&sCount, sP, 4, blocks);
   delay(1000);
 }
-
