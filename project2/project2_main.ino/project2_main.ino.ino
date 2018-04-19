@@ -46,12 +46,11 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("TFT LCD test"));
 
-
-#ifdef USE_Elegoo_SHIELD_PINOUT
-  Serial.println(F("Using Elegoo 2.4\" TFT Arduino Shield Pinout"));
-#else
-  Serial.println(F("Using Elegoo 2.4\" TFT Breakout Board Pinout"));
-#endif
+  #ifdef USE_Elegoo_SHIELD_PINOUT
+    Serial.println(F("Using Elegoo 2.4\" TFT Arduino Shield Pinout"));
+  #else
+    Serial.println(F("Using Elegoo 2.4\" TFT Breakout Board Pinout"));
+  #endif
 
   Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
 
