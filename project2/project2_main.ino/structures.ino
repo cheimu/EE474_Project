@@ -163,9 +163,13 @@ void displayF (void* data) {
   tft.print("| Battery: ");
   unsigned char battery[3];
   intToChar(battery, (int)*(data_in->batteryState));
+  if ((int)*(data_in->batteryState) != 0) {
   tft.print((char)battery[0]);
   tft.print((char)battery[1]);
   tft.print((char)battery[2]);
+  } else {
+    tft.print("000");
+  }
   tft.print("%                        |");
   tft.setTextColor(GREEN);
   tft.print("|                                      |");
@@ -249,10 +253,26 @@ void issue(volatile int* count, int period, int which, TCB* blocks) {
 }
 
 void scheduler(TCB* blocks) {
+  unsigned long a = micros();
   issue(&mCount, mP, 0, blocks);
+  unsigned long b = micros();
   issue(&cCount, cP, 1, blocks);
+  unsigned long c = micros();
   issue(&wCount, wP, 2, blocks);
+  unsigned long d = micros();
   issue(&dCount, dP, 3, blocks);
+  unsigned long e = micros();
   issue(&sCount, sP, 4, blocks);
+  unsigned long f = micros();
+  Serial.println("1");
+  Serial.println(b-a);
+  Serial.println("2");
+  Serial.println(c-b);
+  Serial.println("3");
+  Serial.println(d-c);
+  Serial.println("4");
+  Serial.println(e-d);
+  Serial.println("5");
+  Serial.println(f-e);
   delay(1000);
 }
