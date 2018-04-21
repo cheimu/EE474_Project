@@ -88,7 +88,6 @@ void compute (void* data) {
   intToChar(data_in->sysPressCorrected, systoFixed);
   intToChar(data_in->diastolicPressCorrected, diasFixed);
   intToChar(data_in->pulseRateCorrected, pulseFixed);
-
 }
 
 void displayF (void* data) {
@@ -160,14 +159,16 @@ void displayF (void* data) {
   } else {
     tft.setTextColor(GREEN);
   }
-  tft.print("| Battery: ");
   unsigned char battery[3];
   intToChar(battery, (int)*(data_in->batteryState));
-  if ((int)*(data_in->batteryState) != 0) {
-  tft.print((char)battery[0]);
-  tft.print((char)battery[1]);
-  tft.print((char)battery[2]);
+  if ((int)*(data_in->batteryState) > 0) {
+    tft.print("| Battery: ");
+    tft.print((char)battery[0]);
+    tft.print((char)battery[1]);
+    tft.print((char)battery[2]);
   } else {
+    tft.setTextColor(RED);
+    tft.print("| Battery: ");
     tft.print("000");
   }
   tft.print("%                        |");
@@ -274,5 +275,5 @@ void scheduler(TCB* blocks) {
   Serial.println(e-d);
   Serial.println("5");
   Serial.println(f-e);
-  delay(1000);
+  delay(50);
 }

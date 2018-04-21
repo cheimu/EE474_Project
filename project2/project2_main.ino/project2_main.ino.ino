@@ -3,7 +3,7 @@
 unsigned int temperatureRaw = 75;
 unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
-unsigned int pulseRateRaw = 75;
+unsigned int pulseRateRaw = 50;
 unsigned char tempCorrected[3];
 unsigned char systolicPressCorrected[3];
 unsigned char diastolicPressCorrected[3];
