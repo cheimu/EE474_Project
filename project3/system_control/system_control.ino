@@ -1,13 +1,17 @@
 #include "structures.h"
 // values
-unsigned int temperatureRaw = 75;
-unsigned int systolicPressRaw = 80;
-unsigned int diastolicPressRaw = 80;
-unsigned int pulseRateRaw = 50;
-unsigned char tempCorrected[3];
-unsigned char systolicPressCorrected[3];
-unsigned char diastolicPressCorrected[3];
-unsigned char pulseRateCorrected [3];
+unsigned int temperatureRawBuf[8];
+unsigned int bloodPressRawBuf[16];
+unsigned int pulseRateRawBuf[8];
+
+unsigned char tempCorrectedBuf[8];
+unsigned char bloodPressCorrectedBuf[16];
+unsigned char pulseRateCorrectedBuf[8];
+
+unsigned short functionSelect;
+unsigned short measurementSelection;
+unsigned short alarmAcknowledge;
+
 unsigned short batteryState = 200;
 unsigned char bpOutOfRange = 0;
 unsigned char tempOutOfRange = 0;
@@ -92,34 +96,8 @@ void setup() {
   tft.fillScreen(BLACK);
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(1);
-  // measure tcb
-  mData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr};
-  meas = {&measure, &mData};
-
-  // compute tcb
-  cData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr,
-                       tempCorrected_ptr, sysPressCorrected_ptr, diastolicPressCorrected_ptr, pulseRateCorrected_ptr};
-  comp = {&compute, &cData};
-
-  // display tcb
-  dData = {tempCorrected_ptr, sysPressCorrected_ptr, diastolicPressCorrected_ptr, pulseRateCorrected_ptr, batteryState_ptr};
-  disp = {&displayF, &dData};
-
-  // warning tcb
-  wData = {temperatureRaw_ptr, systolicPressRaw_ptr, diastolicPressRaw_ptr, pulseRateRaw_ptr, batteryState_ptr};
-  warn = {&warningAlarm, &wData};
-
-  // status tcb
-  sData = {batteryState_ptr};
-  stat = {&statusF, &sData};
-
-  blocks[0] = meas;
-  blocks[1] = comp;
-  blocks[2] = warn;
-  blocks[3] = disp;
-  blocks[4] = stat;
+  
 }
 
 void loop() {
-   scheduler(blocks);
 }
