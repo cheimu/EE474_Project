@@ -4,17 +4,20 @@ int timer = 0;
 
 
 // menu is tapped
-#define MENU_TRUE(x,y) ((x < 680) && (x > 320) && (y < 800) && (y > 620))
+#define MENU_TRUE(x,y) ((x < 720) && (x > 330) && (y < 800) && (y > 520))
 // ANNUNCIATION is tapped
-#define ANNUN_TRUE(x,y) ((x < 610) && (x > 320) && (y < 480) && (y > 270))
+#define ANNUN_TRUE(x,y) ((x < 720) && (x > 330) && (y < 420) && (y > 150))
 // return is pressed
 #define BACK_TRUE(x,y) ((y < 200) && (y > 0))
 // flags set & unset
-#define FLAG(x) !x
-#define TEMP_FLAG(x,y) ((x < 800) && (x > 0) && (y < 800) && (y > 500))
-#define PRESS_FLAG(x,y) ((x < 800) && (x > 0) && (y < 800) && (y > 500))
-#define PULSE_FLAG(x,y) ((x < 800) && (x > 0) && (y < 800) && (y > 500))
-#define ALARM_FLAG(x,y) ((x < 800) && (x > 0) && (y < 800) && (y > 500))
+#define FLAG(x) x=!x
+#define TEMP_FLAG(x,y) ((x < 360) && (x > 160) && (y < 612) && (y > 480))
+#define PRESS_FLAG(x,y) ((x < 610 ) && (x > 420) && (y < 612) && (y > 480))
+#define PULSE_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
+
+
+
+#define ALARM_FLAG(x,y) ((x < 800) && (x > 0) && (y < 612) && (y > 480))
 
 
 
@@ -133,8 +136,8 @@ void setup() {
   }
   tft.begin(identifier);
   tft.fillScreen(BLACK);
-  tft.fillRect(90, 210, 80, 80, GREEN);
-  tft.fillRect(90, 80, 80, 80, GREEN);
+  tft.fillRect(90, 50, 80, 80, GREEN);
+  tft.fillRect(90, 200, 80, 80, GREEN);
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(1);
   pinMode(13, OUTPUT);
@@ -165,9 +168,17 @@ void setup() {
   TCB* stat_ptr = &stat;
   insert(meas_ptr);
   insert(comp_ptr);
-  insert(disp_ptr);
   insert(warn_ptr);
+  insert(disp_ptr);
   insert(stat_ptr);
+}
+
+void drawRect (int x, int y, int flag) {
+  if (flag) {
+    tft.fillRect(x, y, 50, 50, GREEN);
+  } else {
+     tft.fillRect(x, y, 50, 50, RED);
+  }
 }
 
 void loop() {
@@ -180,30 +191,48 @@ void loop() {
   if (p.z > MINPRESSURE && p.z < MAXPRESSURE){    
     if (cur == TOP) {
       // top level     
-      if (MENU_TRUE(p.x,p.y)) 
+      if (MENU_TRUE(p.x,p.y)) {
         cur = MENU;
-      else if (ANNUN_TRUE(p.x,p.y))
+      } else if (ANNUN_TRUE(p.x,p.y)) {
         cur = ANNUN;
-      prev = TOP;
+      } 
     } else if (cur == MENU) {
       // menu level
       if (BACK_TRUE(p.x,p.y)) {
         cur = TOP;
-      } else if (TEMP_FLAG(p.x,p.y)) {
+      } 
+      if (TEMP_FLAG(p.x,p.y)) {
+        Serial.println(1);
         FLAG(tempFlag);
-      } else if (PULSE_FLAG(p.x,p.y)) {
+        Serial.println(tempFlag);
+      } 
+      if (PULSE_FLAG(p.x,p.y)) {
+        Serial.println(2);
         FLAG(pulseFlag);
-      } else if (PRESS_FLAG(p.x,p.y)) {
+      } 
+      if (PRESS_FLAG(p.x,p.y)) {
+        Serial.println(3);
         FLAG(pressFlag);
       }
-      prev = MENU;
     } else if (cur == ANNUN) {
-      if (ALARM_FLAG(p.x,p.y))
+      if (ALARM_FLAG(p.x,p.y)) {
         alarmAcknowledge = 5;
-      if (BACK_TRUE(p.x,p.y))
+      }
+      if (BACK_TRUE(p.x,p.y)) {
         cur = TOP;
-      prev = ANNUN;
+      }
     }
+
+    if (prev == cur && cur == MENU) {
+      if (TEMP_FLAG(p.x,p.y)) {
+        drawRect(10, 100, tempFlag);
+      } else if (PRESS_FLAG(p.x,p.y)) {
+        drawRect(90, 100, pulseFlag);
+      } else if (PULSE_FLAG(p.x,p.y)) {
+        drawRect(170, 100, pulseFlag);
+      }
+    }
+    
     Serial.print(p.x);
     Serial.print(" ");
     Serial.print(p.y);
@@ -213,21 +242,36 @@ void loop() {
   if (cur != prev) {
     if (cur == TOP) {
       Serial.print("TOP\n");
-      tft.fillRect(90, 210, 80, 80, GREEN);
-      tft.fillRect(90, 80, 80, 80, GREEN);
+      tft.fillScreen(BLACK);
+      tft.fillRect(90, 50, 80, 80, GREEN);
+      tft.fillRect(90, 200, 80, 80, GREEN);
     }
     else if (cur == MENU) {
       Serial.print("Menu\n");
-      tft.fillRect(0, 0, 800, 40, CYAN);
+      tft.fillScreen(BLACK);
+      if (tempFlag) {
+        tft.fillRect(10, 100, 50, 50, GREEN);
+      } else {
+        tft.fillRect(10, 100, 50, 50, RED);
+      }
+      
+      if (pulseFlag) {
+        tft.fillRect(90, 100, 50, 50, GREEN);
+      } else {
+        tft.fillRect(90, 100, 50, 50, RED);
+      }
+      if (pressFlag) {
+        tft.fillRect(170, 100, 50, 50, GREEN);
+      } else {
+        tft.fillRect(170, 100, 50, 50, RED);
+      } 
+      tft.fillRect(0, 250, 800, 100, CYAN);
+     
     }
   }
   
   if (cur == ANNUN) {
-
-          Serial.print("ANNUN\n");
-
-      scheduler();
-            tft.fillRect(0, 0, 800, 40, CYAN);
-
+    scheduler();
   }
+  prev = cur;
 }

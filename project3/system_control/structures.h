@@ -47,6 +47,12 @@ volatile int dCount=0;
 volatile int wCount=0;
 volatile int sCount=0;
 
+volatile int mPrev=4;
+volatile int cPrev=0;
+volatile int dPrev=4;
+volatile int wPrev=4;
+volatile int sPrev=4;
+
 #define mP 4
 #define cP 4
 #define dP 4
@@ -134,7 +140,7 @@ void deleteNode(TCB* node);
 
 // measure flag
 int tempFlag = 1;
-int pulseFlag = 1;
+int pulseFlag = 0;
 int pressFlag = 1;
 
 int functionSelect() {
@@ -161,17 +167,21 @@ void measure(void* data) {
   char systo_rx = Serial1.read();
   char diasto_rx = Serial1.read();
   char pr_rx = Serial1.read();
-  char endbyte = Serial.read();
-  
-  Serial.print((int)temp_rx);
+  char endbyte = Serial1.read();
+  /*
+  Serial.print((int)inbyte); Serial.print(" ");
+  Serial.print((int)temp_rx);Serial.print(" ");
+  Serial.print((int)systo_rx);Serial.print(" ");
+  Serial.print((int)diasto_rx);Serial.print(" ");
+  Serial.print((int)pr_rx);Serial.print(" ");
+  Serial.print((int)endbyte);Serial.print(" ");
   Serial.println();
-  Serial.print((int)pr_rx);
- 
+  */
   
   if (*(data_in->measurementSelection) & 0b001) {
-     *(data_in->temperatureRawBuf) = temp_rx; 
-     
-      }
+     data_in->temperatureRawBuf[0] = temp_rx;  
+   }
+   
   if (*(data_in->measurementSelection) & 0b010) {
       
      *(data_in->bloodPressRawBuf) = systo_rx;
@@ -181,6 +191,14 @@ void measure(void* data) {
   if (*(data_in->measurementSelection) & 0b100) {
      *(data_in->pulseRateRawBuf) = pr_rx; 
   }
+  /*
+  Serial.println("Measured");
+  Serial.print((int)data_in->temperatureRawBuf[0]); Serial.print(" ");
+  Serial.print((int)data_in->bloodPressRawBuf[0]);Serial.print(" ");
+  Serial.print((int)data_in->bloodPressRawBuf[8]);Serial.print(" ");
+  Serial.print((int)data_in->pulseRateRawBuf[0]);Serial.print(" ");
+  Serial.println();
+  */
 }
 
 void intToChar(unsigned char* result , int num) {
@@ -200,10 +218,24 @@ void compute(void* data) {
   diasFixed = 6 + 1.5 * diasFixed;
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
+  /*
+  Serial.println("Fixed");
+  Serial.print(tempFixed); Serial.print(" ");
+  Serial.print(systoFixed);Serial.print(" ");
+  Serial.print(diasFixed);Serial.print(" ");
+  Serial.print(pulseFixed);Serial.print(" ");
+  Serial.println();
   intToChar(data_in->tempCorrectedBuf, tempFixed);
   intToChar(data_in->bloodPressCorrectedBuf, systoFixed);
   intToChar(data_in->bloodPressCorrectedBuf + 8, diasFixed);
   intToChar(data_in->pulseRateCorrectedBuf, pulseFixed);
+  Serial.println("Corrected");
+  Serial.print(data_in->tempCorrectedBuf[0]);Serial.print(data_in->tempCorrectedBuf[1]);Serial.print(data_in->tempCorrectedBuf[2]); Serial.print(" ");
+  Serial.print(data_in->bloodPressCorrectedBuf[0]);Serial.print(data_in->bloodPressCorrectedBuf[1]);Serial.print(data_in->bloodPressCorrectedBuf[2]);Serial.print(" ");
+  Serial.print(data_in->bloodPressCorrectedBuf[0]);Serial.print(data_in->bloodPressCorrectedBuf[1]);Serial.print(data_in->bloodPressCorrectedBuf[2]);Serial.print(" ");
+  Serial.print(data_in->pulseRateCorrectedBuf[0]);Serial.print(data_in->pulseRateCorrectedBuf[1]);Serial.print(data_in->pulseRateCorrectedBuf[2]);Serial.print(" ");
+  Serial.println();
+  */
 }
 
 void displayF (void* data) {
@@ -222,8 +254,8 @@ void displayF (void* data) {
       tft.setTextColor(GREEN);
     }
     tft.print("| Temperature: ");
-    tft.print(data_in->tempCorrectedBuf[1]);
-    tft.print(data_in->tempCorrectedBuf[2]);
+    tft.print((char)data_in->tempCorrectedBuf[1]);
+    tft.print((char)data_in->tempCorrectedBuf[2]);
     tft.print(" C                    |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
@@ -232,17 +264,16 @@ void displayF (void* data) {
     // print systolic pressure
     if (sysOutOfRange == 1 && alarmAcknowledge != 0) {
       tft.setTextColor(YELLOW);
-    } else {
-      if (alarmAcknowledge == 0) {
+    } else if (sysOutOfRange == 1 && alarmAcknowledge != 0 && alarmAcknowledge == 0) {
         tft.setTextColor(RED);
-      } else {
+    } else {
         tft.setTextColor(GREEN);
-      }
     }
+  
     tft.print("| Systolic Pressure: ");
-    tft.print(data_in->bloodPressCorrectedBuf[0]);
-    tft.print(data_in->bloodPressCorrectedBuf[1]);
-    tft.print(data_in->bloodPressCorrectedBuf[2]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[0]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[1]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[2]);
     tft.print(" mmHg          |");
   
     tft.setTextColor(GREEN);
@@ -255,14 +286,13 @@ void displayF (void* data) {
       tft.setTextColor(GREEN);
     }
     tft.print("| Diastolic Pressure: ");
-    tft.print(data_in->bloodPressCorrectedBuf[8]);
-    tft.print(data_in->bloodPressCorrectedBuf[9]);
-    tft.print(data_in->bloodPressCorrectedBuf[10]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[8]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[9]);
+    tft.print((char)data_in->bloodPressCorrectedBuf[10]);
     tft.print(" mmHg         |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
   }
-
   if (pressFlag) {
     // print pulse rate
     if (pulseOutOfRange == 1) {
@@ -302,6 +332,7 @@ void displayF (void* data) {
   tft.print("|                                      |");
   tft.print("|--------------------------------------|");
   tft.print("     We hope you are in good health!    ");
+  tft.fillRect(0, 250, 800, 100, CYAN);
 }
 
 void warningAlarm (void* data) {
@@ -376,22 +407,34 @@ void statusF (void* data) {
   }
 }
 
-void issue(volatile int* count, TCB* blocks) {
-  if (*count == 0) {
+void issue(volatile int* count, volatile int* prev, int p,  TCB* blocks) {
+  if (*count == 0 && *prev == p) {
     (*blocks->mytask)(blocks->taskDataPr);
   }
 }
 
 void scheduler() {
   TCB* cur = head;
-  issue(&mCount, cur);
+  issue(&mCount, &mPrev, 4,cur);
   cur = cur->next;
-  issue(&cCount, cur);
+  issue(&cCount, &cPrev, 4,cur);
   cur = cur->next;
-  issue(&wCount, cur);
+  issue(&wCount, &wPrev, 0,cur);
   cur = cur->next;
-  issue(&dCount, cur);
+  issue(&dCount, &dPrev, 4,cur);
   cur = cur->next;
-  issue(&sCount, cur);
+  issue(&sCount, &sPrev, 4,cur);
+  /*
+  Serial.print(mCount);Serial.print(" ");Serial.print(mPrev); Serial.println();
+  Serial.print(cCount);Serial.print(" ");Serial.print(cPrev); Serial.println();
+  Serial.print(dCount);Serial.print(" ");Serial.print(dPrev); Serial.println();
+  Serial.print(wCount);Serial.print(" ");Serial.print(wPrev); Serial.println();
+  Serial.print(sCount);Serial.print(" ");Serial.print(sPrev); Serial.println();
+  */
+  mPrev = mCount;
+  cPrev = cCount;
+  dPrev = dCount;
+  wPrev = wCount;
+  sPrev = sCount;
 }
 #endif
