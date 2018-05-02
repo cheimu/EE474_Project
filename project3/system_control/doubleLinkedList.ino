@@ -1,5 +1,4 @@
 #include "structures.h"
-TCB* head, tail;
 
 void insert(TCB* node) {
 	if (NULL == head) {
@@ -13,9 +12,8 @@ void insert(TCB* node) {
 	return;
 }
 
-void delete(TCB* node) {
+void deleteNode(TCB* node) {
 	if (NULL == head) {
-		printf("delete on null double Linked List);
 		return;
 	} else if (head == tail) {
 		head = NULL;
