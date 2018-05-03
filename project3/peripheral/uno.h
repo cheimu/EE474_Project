@@ -50,6 +50,7 @@ void measure (MeasureData* data_in, char which) {
   }
 
   if (which == 4) {
+    /*
     unsigned int pulse = *(data_in->pulseRateRaw);
     if (pulse > 40) {
       pulseUp = 0;
@@ -75,6 +76,9 @@ void measure (MeasureData* data_in, char which) {
     } else {
       times4 = EVEN;
     }
+    */
+
+    
   }
 
   if (which == 3) {

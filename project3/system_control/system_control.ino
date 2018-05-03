@@ -12,12 +12,12 @@ int timer = 0;
 // flags set & unset
 #define FLAG(x) x=!x
 #define TEMP_FLAG(x,y) ((x < 360) && (x > 160) && (y < 612) && (y > 480))
-#define PRESS_FLAG(x,y) ((x < 610 ) && (x > 420) && (y < 612) && (y > 480))
-#define PULSE_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
+#define PULSE_FLAG(x,y) ((x < 610 ) && (x > 420) && (y < 612) && (y > 480))
+#define PRESS_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
 
 
 
-#define ALARM_FLAG(x,y) ((x < 800) && (x > 0) && (y < 612) && (y > 480))
+#define ALARM_FLAG(x,y) ((x < 300) && (x > 0) && (y < 370) && (y > 270))
 
 
 
@@ -32,9 +32,6 @@ unsigned char pulseRateCorrectedBuf[8];
 
 unsigned short functionSelectValue;
 unsigned short measurementSelection = 0b111;
-
-
-
 
 // pointer values
 unsigned short* batteryState_ptr = &batteryState;
@@ -59,6 +56,11 @@ SCR_STATE prev = TOP;
 
 void timerInterrupt() {
   timer++;
+  if (sysRed) {
+    if (alarmAcknowledge) {
+          alarmAcknowledge = alarmAcknowledge - 1;
+    }
+  }
   if (mCount == mP) {
     mCount = 0;
   } else {
@@ -207,29 +209,33 @@ void loop() {
         Serial.println(tempFlag);
       } 
       if (PULSE_FLAG(p.x,p.y)) {
-        Serial.println(2);
+        Serial.println(3);
         FLAG(pulseFlag);
       } 
       if (PRESS_FLAG(p.x,p.y)) {
-        Serial.println(3);
+        Serial.println(2);
         FLAG(pressFlag);
       }
     } else if (cur == ANNUN) {
       if (ALARM_FLAG(p.x,p.y)) {
-        alarmAcknowledge = 5;
+        if (sysOutOfRange) {
+          alarmAcknowledge = 25;
+        }
       }
       if (BACK_TRUE(p.x,p.y)) {
         cur = TOP;
       }
+      Serial.print("Alarm flag ");Serial.println(alarmAcknowledge);
+      Serial.print("Systo flag ");Serial.println(sysOutOfRange);
     }
 
     if (prev == cur && cur == MENU) {
       if (TEMP_FLAG(p.x,p.y)) {
         drawRect(10, 100, tempFlag);
       } else if (PRESS_FLAG(p.x,p.y)) {
-        drawRect(90, 100, pulseFlag);
+        drawRect(170, 100, pressFlag);
       } else if (PULSE_FLAG(p.x,p.y)) {
-        drawRect(170, 100, pulseFlag);
+        drawRect(90, 100, pulseFlag);
       }
     }
     

@@ -1,17 +1,18 @@
 #include "uno.h"
 #define START 9
+#include <Time.h>
 char inbyte;
 unsigned int temperatureRaw = 75;
 unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
 unsigned int pulseRateRaw = 75;
-
-
+int inPin = 7;
+int val = 0;
 
 void setup()
 {
   Serial.begin(9600);
-
+  pinMode(inPin, INPUT);
 }
 
 
@@ -29,10 +30,26 @@ void loop()
         
       }
 	  if ((funcIndex & 0b010)) {
-        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        measure(&data, 3);
+        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
+        //measure(&data, 3);
         
+        unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(inPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
+        }
+        
+        pulseRateRaw = count;   
       }
+
+    
 	  if ((funcIndex & 0b100)) {
         MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
         measure(&data, 4);

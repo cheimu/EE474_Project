@@ -140,7 +140,7 @@ void deleteNode(TCB* node);
 
 // measure flag
 int tempFlag = 1;
-int pulseFlag = 0;
+int pulseFlag = 1;
 int pressFlag = 1;
 
 int functionSelect() {
@@ -168,7 +168,7 @@ void measure(void* data) {
   char diasto_rx = Serial1.read();
   char pr_rx = Serial1.read();
   char endbyte = Serial1.read();
-  /*
+  Serial.println("Received");
   Serial.print((int)inbyte); Serial.print(" ");
   Serial.print((int)temp_rx);Serial.print(" ");
   Serial.print((int)systo_rx);Serial.print(" ");
@@ -176,7 +176,7 @@ void measure(void* data) {
   Serial.print((int)pr_rx);Serial.print(" ");
   Serial.print((int)endbyte);Serial.print(" ");
   Serial.println();
-  */
+  
   
   if (*(data_in->measurementSelection) & 0b001) {
      data_in->temperatureRawBuf[0] = temp_rx;  
@@ -191,14 +191,14 @@ void measure(void* data) {
   if (*(data_in->measurementSelection) & 0b100) {
      *(data_in->pulseRateRawBuf) = pr_rx; 
   }
-  /*
   Serial.println("Measured");
   Serial.print((int)data_in->temperatureRawBuf[0]); Serial.print(" ");
   Serial.print((int)data_in->bloodPressRawBuf[0]);Serial.print(" ");
   Serial.print((int)data_in->bloodPressRawBuf[8]);Serial.print(" ");
   Serial.print((int)data_in->pulseRateRawBuf[0]);Serial.print(" ");
   Serial.println();
-  */
+   
+
 }
 
 void intToChar(unsigned char* result , int num) {
@@ -218,29 +218,31 @@ void compute(void* data) {
   diasFixed = 6 + 1.5 * diasFixed;
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
-  /*
+  
   Serial.println("Fixed");
   Serial.print(tempFixed); Serial.print(" ");
   Serial.print(systoFixed);Serial.print(" ");
   Serial.print(diasFixed);Serial.print(" ");
   Serial.print(pulseFixed);Serial.print(" ");
   Serial.println();
+  
   intToChar(data_in->tempCorrectedBuf, tempFixed);
   intToChar(data_in->bloodPressCorrectedBuf, systoFixed);
   intToChar(data_in->bloodPressCorrectedBuf + 8, diasFixed);
   intToChar(data_in->pulseRateCorrectedBuf, pulseFixed);
+  
   Serial.println("Corrected");
   Serial.print(data_in->tempCorrectedBuf[0]);Serial.print(data_in->tempCorrectedBuf[1]);Serial.print(data_in->tempCorrectedBuf[2]); Serial.print(" ");
   Serial.print(data_in->bloodPressCorrectedBuf[0]);Serial.print(data_in->bloodPressCorrectedBuf[1]);Serial.print(data_in->bloodPressCorrectedBuf[2]);Serial.print(" ");
   Serial.print(data_in->bloodPressCorrectedBuf[0]);Serial.print(data_in->bloodPressCorrectedBuf[1]);Serial.print(data_in->bloodPressCorrectedBuf[2]);Serial.print(" ");
   Serial.print(data_in->pulseRateCorrectedBuf[0]);Serial.print(data_in->pulseRateCorrectedBuf[1]);Serial.print(data_in->pulseRateCorrectedBuf[2]);Serial.print(" ");
   Serial.println();
-  */
 }
 
 void displayF (void* data) {
   // calculate whethether systolic or diastolic pressure is out of range
   tft.fillScreen(BLACK);
+  tft.fillRect(0, 200, 40, 40, GREEN);
   tft.setCursor(0,0);
   tft.print("   E-Doc: Your Private Doctor (^ w ^)   ");
   DisplayData* data_in = (DisplayData*) data;
@@ -262,11 +264,13 @@ void displayF (void* data) {
   }
   if (pulseFlag) {
     // print systolic pressure
-    if (sysOutOfRange == 1 && alarmAcknowledge != 0) {
+    if (sysOutOfRange == 1 && !sysRed) {
       tft.setTextColor(YELLOW);
-    } else if (sysOutOfRange == 1 && alarmAcknowledge != 0 && alarmAcknowledge == 0) {
+    } else if (sysRed == 1 && alarmAcknowledge == 0) {
         tft.setTextColor(RED);
-    } else {
+    } else if (sysRed == 1 && alarmAcknowledge != 0) {
+      tft.setTextColor(YELLOW);
+    } else{
         tft.setTextColor(GREEN);
     }
   
@@ -366,17 +370,18 @@ void warningAlarm (void* data) {
     }
     if (systoFixed > 130 || systoFixed < 120) {
       sysOutOfRange = TRUE;
-      if (alarmAcknowledge) {
-        alarmAcknowledge = alarmAcknowledge - 1;
-      }
       if (systoFixed > 156 || systoFixed < 96) {
         sysRed = TRUE;
-      } 
+      } else {
+         sysRed = FALSE;
+      }
     } else {
       alarmAcknowledge = 0;
       sysOutOfRange = FALSE;
+      sysRed = FALSE;
     }
   } else {
+    alarmAcknowledge = 0;
     sysOutOfRange = 0;
     diasOutOfRange = 0;
   }
