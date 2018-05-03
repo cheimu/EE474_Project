@@ -143,6 +143,18 @@ int tempFlag = 1;
 int pulseFlag = 1;
 int pressFlag = 1;
 
+// task blocks and task queue
+TCB meas;
+TCB comp;
+TCB disp;
+TCB warn;
+TCB stat;
+MeasureData mData;
+ComputeData cData;
+DisplayData dData;
+WarningAlarmData wData;
+Status sData;
+
 int functionSelect() {
   int s = 0;
   if (tempFlag)
@@ -162,6 +174,7 @@ void measure(void* data) {
   Serial1.write(0);
   
   while (Serial1.available() < 6);
+  
   char inbyte = Serial1.read();
   char temp_rx = Serial1.read();
   char systo_rx = Serial1.read();
@@ -412,23 +425,45 @@ void statusF (void* data) {
   }
 }
 
-void issue(volatile int* count, volatile int* prev, int p,  TCB* blocks) {
+
+// indicating # of taskes to issue
+int issue_count = 0;
+
+void issue(volatile int* count, volatile int* prev, volatile int p,  TCB* block) {
+  Serial.println();
+  Serial.print(*count); Serial.print(" "); Serial.print(p);Serial.print(" ");Serial.print(*prev);Serial.println();
   if (*count == 0 && *prev == p) {
-    (*blocks->mytask)(blocks->taskDataPr);
+    Serial.print("Period ");
+    Serial.println(p);
+    // replace execution with scheduling
+    // (*blocks->mytask)(blocks->taskDataPr);
+    insert(block);
+    issue_count += 1;
   }
 }
 
 void scheduler() {
-  TCB* cur = head;
-  issue(&mCount, &mPrev, 4,cur);
-  cur = cur->next;
-  issue(&cCount, &cPrev, 4,cur);
-  cur = cur->next;
-  issue(&wCount, &wPrev, 0,cur);
-  cur = cur->next;
-  issue(&dCount, &dPrev, 4,cur);
-  cur = cur->next;
-  issue(&sCount, &sPrev, 4,cur);
+  head = NULL;
+  tail = NULL;
+  issue_count = 0;
+  // check and put task blocks into stack queue
+  issue(&mCount, &mPrev, 4,&meas);
+  //Serial.println("meas");
+  issue(&cCount, &cPrev, 4,&comp);
+  //Serial.println("calc");
+  issue(&wCount, &wPrev, 0,&warn);
+  //Serial.println("warn");
+  issue(&dCount, &dPrev, 4,&disp);
+  //Serial.println("disp");
+  issue(&sCount, &sPrev, 4,&stat);
+  //Serial.println("stat");
+  //Serial.print("issue ");
+  //Serial.println(issue_count);
+  mPrev = mCount;
+  cPrev = cCount;
+  dPrev = dCount;
+  wPrev = wCount;
+  sPrev = sCount;
   /*
   Serial.print(mCount);Serial.print(" ");Serial.print(mPrev); Serial.println();
   Serial.print(cCount);Serial.print(" ");Serial.print(cPrev); Serial.println();
@@ -436,10 +471,13 @@ void scheduler() {
   Serial.print(wCount);Serial.print(" ");Serial.print(wPrev); Serial.println();
   Serial.print(sCount);Serial.print(" ");Serial.print(sPrev); Serial.println();
   */
-  mPrev = mCount;
-  cPrev = cCount;
-  dPrev = dCount;
-  wPrev = wCount;
-  sPrev = sCount;
+  TCB* cur = head;
+  int i;
+  //Serial.println("start");
+  for (i = 0; i < issue_count; i++) {
+    (*cur->mytask)(cur->taskDataPr);
+    cur = cur->next;
+  }
+
 }
 #endif

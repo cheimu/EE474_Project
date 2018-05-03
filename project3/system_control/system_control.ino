@@ -14,9 +14,6 @@ int timer = 0;
 #define TEMP_FLAG(x,y) ((x < 360) && (x > 160) && (y < 612) && (y > 480))
 #define PULSE_FLAG(x,y) ((x < 610 ) && (x > 420) && (y < 612) && (y > 480))
 #define PRESS_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
-
-
-
 #define ALARM_FLAG(x,y) ((x < 300) && (x > 0) && (y < 370) && (y > 270))
 
 
@@ -37,6 +34,8 @@ unsigned short measurementSelection = 0b111;
 unsigned short* batteryState_ptr = &batteryState;
 
 // task blocks and task queue
+
+/*
 TCB meas;
 TCB comp;
 TCB disp;
@@ -47,6 +46,7 @@ ComputeData cData;
 DisplayData dData;
 WarningAlarmData wData;
 Status sData;
+*/
 
 // screen state
 enum state { TOP = 0, MENU = 1, ANNUN = 2, EXPAND = 3 };
@@ -151,28 +151,29 @@ void setup() {
   // measure tcb
   mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, &measurementSelection};
   meas = {&measure, &mData};
-  TCB* meas_ptr = &meas;
+  // TCB* meas_ptr = &meas;
   // compute tcb
   cData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, &measurementSelection, tempCorrectedBuf,  bloodPressCorrectedBuf, pulseRateCorrectedBuf};
   comp = {&compute, &cData};
-  TCB* comp_ptr = &comp;
+  // TCB* comp_ptr = &comp;
   // display tcb
   dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, batteryState_ptr};
   disp = {&displayF, &dData};
-  TCB* disp_ptr = &disp;
+  // TCB* disp_ptr = &disp;
   // warning tcb
   wData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, batteryState_ptr};
   warn = {&warningAlarm, &wData};
-  TCB* warn_ptr = &warn;
+  // TCB* warn_ptr = &warn;
   // status tcb
   sData = {batteryState_ptr};
   stat = {&statusF, &sData};
-  TCB* stat_ptr = &stat;
-  insert(meas_ptr);
-  insert(comp_ptr);
-  insert(warn_ptr);
-  insert(disp_ptr);
-  insert(stat_ptr);
+  // TCB* stat_ptr = &stat;
+
+  // insert(meas_ptr);
+  // insert(comp_ptr);
+  // insert(warn_ptr);
+  // insert(disp_ptr);
+  // insert(stat_ptr);
 }
 
 void drawRect (int x, int y, int flag) {
@@ -277,7 +278,13 @@ void loop() {
   }
   
   if (cur == ANNUN) {
+    Serial.println("counters: ");
+    Serial.print(mCount);Serial.print(cCount);Serial.print(dCount);Serial.print(wCount);
+    Serial.println();
+    
+    //Serial.println("before");
     scheduler();
+    //Serial.println("after");
   }
   prev = cur;
 }
