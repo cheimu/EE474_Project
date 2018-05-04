@@ -138,6 +138,12 @@ TCB* tail = NULL;
 void insert(TCB* node);
 void deleteNode(TCB* node);
 
+
+// pulseBuffer
+char pulseBuffer[8];
+int bufHead = 0; 
+int buffTail = 0;
+
 // measure flag
 int tempFlag = 1;
 int pulseFlag = 1;
@@ -231,6 +237,13 @@ void compute(void* data) {
   diasFixed = 6 + 1.5 * diasFixed;
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
+
+  // add to buffer 
+  /*
+  if (pulseFixed > (1.15 * pulsePrev) || pulseFixed < (0.85 * pulsePrev)) {
+    pulseBuffer.add(pulseFixed);
+    pulsePrev = pulseFixed;
+  }*/
   
   Serial.println("Fixed");
   Serial.print(tempFixed); Serial.print(" ");
@@ -327,7 +340,7 @@ void displayF (void* data) {
   }
   // print battery status
   if (lowPower == TRUE) {
-    tft.setTextColor(YELLOW);
+    tft.setTextColor(RED);
   } else {
     tft.setTextColor(GREEN);
   }
@@ -340,7 +353,6 @@ void displayF (void* data) {
     tft.print((char)battery[1]);
     tft.print((char)battery[2]);
   } else {
-    tft.setTextColor(RED);
     tft.print("| Battery: ");
     tft.print("000");
   }
@@ -430,11 +442,10 @@ void statusF (void* data) {
 int issue_count = 0;
 
 void issue(volatile int* count, volatile int* prev, volatile int p,  TCB* block) {
-  Serial.println();
-  Serial.print(*count); Serial.print(" "); Serial.print(p);Serial.print(" ");Serial.print(*prev);Serial.println();
+  // Serial.print(*count); Serial.print(" "); Serial.print(p);Serial.print(" ");Serial.print(*prev);Serial.println();
   if (*count == 0 && *prev == p) {
-    Serial.print("Period ");
-    Serial.println(p);
+    //Serial.print("Period ");
+    //Serial.println(p);
     // replace execution with scheduling
     // (*blocks->mytask)(blocks->taskDataPr);
     insert(block);

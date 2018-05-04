@@ -88,8 +88,6 @@ void timerInterrupt() {
   }
 }
 
-
-
 void setup() {
   Serial.begin(9600);
   Serial.println(F("TFT LCD test"));
@@ -146,7 +144,6 @@ void setup() {
   Timer1.initialize(1000000);
   Timer1.attachInterrupt(timerInterrupt, 1000000);
   Serial1.begin(9600);
-
 
   // measure tcb
   mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, &measurementSelection};
@@ -278,10 +275,11 @@ void loop() {
   }
   
   if (cur == ANNUN) {
+    /*
     Serial.println("counters: ");
     Serial.print(mCount);Serial.print(cCount);Serial.print(dCount);Serial.print(wCount);
     Serial.println();
-    
+    */
     //Serial.println("before");
     scheduler();
     //Serial.println("after");

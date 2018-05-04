@@ -20,6 +20,7 @@ void loop()
 {
   while (Serial.available() < 3 );
   inbyte = Serial.read();
+  
   if (inbyte == (char)9) {
        char funcIndex = Serial.read(); // s = 3'bxxx
        char endByte = Serial.read();
@@ -29,7 +30,7 @@ void loop()
         measure(&data, 2);
         
       }
-	  if ((funcIndex & 0b010)) {
+	  if ((funcIndex & 0b100)) {
         //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
         //measure(&data, 3);
         
@@ -37,7 +38,6 @@ void loop()
         int cur = 0;
         int prev = 0;
         int count = 0;
-        
         while ((micros()) - start < (unsigned long)1000) {
           cur = digitalRead(inPin);     // read the input pin
           if (prev == 0 && cur == 1) {
@@ -45,24 +45,30 @@ void loop()
           }
           prev = cur;
         }
-        
         pulseRateRaw = count;   
-      }
+    }
 
     
-	  if ((funcIndex & 0b100)) {
+	  if ((funcIndex & 0b010)) {
         MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        measure(&data, 4);
- 
-      }
+        measure(&data, 3);
+    }
 
-    
     Serial.write(9);
 	  Serial.write((char)temperatureRaw);
 	  Serial.write((char)systolicPressRaw);
+    /*
+    Serial.println("systo");
+    Serial.println(systolicPressRaw);
+	  */
 	  Serial.write((char)diastolicPressRaw);
+    /*
+    Serial.println("diasto");
+    Serial.println(diastolicPressRaw);
+	  */
 	  Serial.write((char)pulseRateRaw);
 	  Serial.write(0);
+   
   }
 }
 
