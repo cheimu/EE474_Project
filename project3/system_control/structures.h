@@ -76,6 +76,15 @@ Bool pulseLow = FALSE;
 Bool lowPower = FALSE;
 Bool sysRed = FALSE;
 
+// pulse ring buffer
+void put(char val, int size);
+char get(int size);
+int lead = 1;
+int bufHead = 0;
+int bufTail = 0;
+char inpulseBuffer[8];
+char pulsePrev = 0;
+
 
 typedef struct {
 	unsigned char* temperatureRawBuf;
@@ -138,11 +147,6 @@ TCB* tail = NULL;
 void insert(TCB* node);
 void deleteNode(TCB* node);
 
-
-// pulseBuffer
-char pulseBuffer[8];
-int bufHead = 0; 
-int buffTail = 0;
 
 // measure flag
 int tempFlag = 1;
@@ -239,11 +243,10 @@ void compute(void* data) {
   pulseFixed = 8 + 3 * pulseFixed;
 
   // add to buffer 
-  /*
   if (pulseFixed > (1.15 * pulsePrev) || pulseFixed < (0.85 * pulsePrev)) {
-    pulseBuffer.add(pulseFixed);
+    put((char)pulseFixed, 9);
     pulsePrev = pulseFixed;
-  }*/
+  }
   
   Serial.println("Fixed");
   Serial.print(tempFixed); Serial.print(" ");

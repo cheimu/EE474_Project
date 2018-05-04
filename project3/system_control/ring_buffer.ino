@@ -1,10 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-
-int lead = 1;
-int bufHead = 0;
-int bufTail = 0;
-char inpulseBuffer[8];
+#include "structures.h" 
 
 void put(char val, int size) {
   inpulseBuffer[bufHead] = val;
@@ -57,18 +51,5 @@ char get(int size){
   bufTail+=1;
 }
 
-int main(){
-  put('A',8);
-  put('B',8);
-  put('C',8);
-  put('D',8);
-  put('E',8);
-  put('F',8);
-  put('G',8);
-  put('H',8);
-  printf("Result \n");
-  printf("Result:  %s  \n", inpulseBuffer);
-  char r[]={get(8),get(8),get(8),get(8), get(8), get(8), get(8), get(8)};
-  printf("Result:  %s", r);
 
-}
+
