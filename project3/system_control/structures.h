@@ -53,6 +53,19 @@ volatile int dPrev=4;
 volatile int wPrev=4;
 volatile int sPrev=4;
 
+/*
+ * Define each time stamp
+  volatile int mLast=-5;
+  volatile int cLast=-5;
+  volatile int dlast=-5;
+  volatile int wLast=-5;
+  volatile int sLast=-5;
+ */
+
+// measurement Flag:
+int measureFlag = 0;
+
+
 #define mP 4
 #define cP 4
 #define dP 4
@@ -356,6 +369,7 @@ void displayF (void* data) {
     tft.print((char)battery[1]);
     tft.print((char)battery[2]);
   } else {
+    tft.setTextColor(RED);
     tft.print("| Battery: ");
     tft.print("000");
   }
@@ -453,6 +467,11 @@ void issue(volatile int* count, volatile int* prev, volatile int p,  TCB* block)
     // (*blocks->mytask)(blocks->taskDataPr);
     insert(block);
     issue_count += 1;
+
+    /*
+     * last = timer;
+     */
+    
   }
 }
 
@@ -460,16 +479,34 @@ void scheduler() {
   head = NULL;
   tail = NULL;
   issue_count = 0;
+
+  // if ((timer-mLast) >= 5 && (tempFlag | pressFlag | pulseFlag)) { 
+  //  issus(&meas, &mLast);
+  //  measureFlag = 1;
   // check and put task blocks into stack queue
   issue(&mCount, &mPrev, 4,&meas);
+
+  // if ((timer-cLast) >= 5 && measureFlag) { 
+  //  issus(&comp, &cLast);
+  //  measureFlag = 0;
   //Serial.println("meas");
   issue(&cCount, &cPrev, 4,&comp);
+
+  // if ((timer-wLast) >= 1) { 
+  //  issus(&warn, &wLast);
   //Serial.println("calc");
   issue(&wCount, &wPrev, 0,&warn);
+
+  // if ((timer-dLast) >= 5) { 
+  //  issus(&disp, &dLast);
   //Serial.println("warn");
   issue(&dCount, &dPrev, 4,&disp);
+
+  // if ((timer-sLast) >= 5) { 
+  //  issus(&stat, &sLast);
   //Serial.println("disp");
   issue(&sCount, &sPrev, 4,&stat);
+  
   //Serial.println("stat");
   //Serial.print("issue ");
   //Serial.println(issue_count);
