@@ -195,9 +195,9 @@ void measure(void* data) {
   Serial1.write(9);
   Serial1.write(*(data_in->measurementSelection));
   Serial1.write(0);
-  
+
   while (Serial1.available() < 6);
-  
+
   char inbyte = Serial1.read();
   char temp_rx = Serial1.read();
   char systo_rx = Serial1.read();
@@ -212,20 +212,20 @@ void measure(void* data) {
   Serial.print((int)pr_rx);Serial.print(" ");
   Serial.print((int)endbyte);Serial.print(" ");
   Serial.println();
-  
-  
+
+
   if (*(data_in->measurementSelection) & 0b001) {
-     data_in->temperatureRawBuf[0] = temp_rx;  
+     data_in->temperatureRawBuf[0] = temp_rx;
    }
-   
+
   if (*(data_in->measurementSelection) & 0b010) {
-      
+
      *(data_in->bloodPressRawBuf) = systo_rx;
      *(data_in->bloodPressRawBuf + 8) = diasto_rx;
 
     }
   if (*(data_in->measurementSelection) & 0b100) {
-     *(data_in->pulseRateRawBuf) = pr_rx; 
+     *(data_in->pulseRateRawBuf) = pr_rx;
   }
   Serial.println("Measured");
   Serial.print((int)data_in->temperatureRawBuf[0]); Serial.print(" ");
@@ -233,8 +233,6 @@ void measure(void* data) {
   Serial.print((int)data_in->bloodPressRawBuf[8]);Serial.print(" ");
   Serial.print((int)data_in->pulseRateRawBuf[0]);Serial.print(" ");
   Serial.println();
-   
-
 }
 
 void intToChar(unsigned char* result , int num) {
@@ -255,24 +253,24 @@ void compute(void* data) {
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
 
-  // add to buffer 
+  // add to buffer
   if (pulseFixed > (1.15 * pulsePrev) || pulseFixed < (0.85 * pulsePrev)) {
     put((char)pulseFixed, 9);
     pulsePrev = pulseFixed;
   }
-  
+
   Serial.println("Fixed");
   Serial.print(tempFixed); Serial.print(" ");
   Serial.print(systoFixed);Serial.print(" ");
   Serial.print(diasFixed);Serial.print(" ");
   Serial.print(pulseFixed);Serial.print(" ");
   Serial.println();
-  
+
   intToChar(data_in->tempCorrectedBuf, tempFixed);
   intToChar(data_in->bloodPressCorrectedBuf, systoFixed);
   intToChar(data_in->bloodPressCorrectedBuf + 8, diasFixed);
   intToChar(data_in->pulseRateCorrectedBuf, pulseFixed);
-  
+
   Serial.println("Corrected");
   Serial.print(data_in->tempCorrectedBuf[0]);Serial.print(data_in->tempCorrectedBuf[1]);Serial.print(data_in->tempCorrectedBuf[2]); Serial.print(" ");
   Serial.print(data_in->bloodPressCorrectedBuf[0]);Serial.print(data_in->bloodPressCorrectedBuf[1]);Serial.print(data_in->bloodPressCorrectedBuf[2]);Serial.print(" ");
@@ -315,16 +313,16 @@ void displayF (void* data) {
     } else{
         tft.setTextColor(GREEN);
     }
-  
+
     tft.print("| Systolic Pressure: ");
     tft.print((char)data_in->bloodPressCorrectedBuf[0]);
     tft.print((char)data_in->bloodPressCorrectedBuf[1]);
     tft.print((char)data_in->bloodPressCorrectedBuf[2]);
     tft.print(" mmHg          |");
-  
+
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
-  
+
     // print diastolic pressure
     if (diasOutOfRange == 1) {
       tft.setTextColor(YELLOW);
@@ -360,7 +358,7 @@ void displayF (void* data) {
   } else {
     tft.setTextColor(GREEN);
   }
-  
+
   unsigned char battery[3];
   intToChar(battery, (int)*(data_in->batteryState));
   if ((int)*(data_in->batteryState) > 0) {
@@ -471,7 +469,7 @@ void issue(volatile int* count, volatile int* prev, volatile int p,  TCB* block)
     /*
      * last = timer;
      */
-    
+
   }
 }
 
@@ -480,33 +478,33 @@ void scheduler() {
   tail = NULL;
   issue_count = 0;
 
-  // if ((timer-mLast) >= 5 && (tempFlag | pressFlag | pulseFlag)) { 
+  // if ((timer-mLast) >= 5 && (tempFlag | pressFlag | pulseFlag)) {
   //  issus(&meas, &mLast);
   //  measureFlag = 1;
   // check and put task blocks into stack queue
   issue(&mCount, &mPrev, 4,&meas);
 
-  // if ((timer-cLast) >= 5 && measureFlag) { 
+  // if ((timer-cLast) >= 5 && measureFlag) {
   //  issus(&comp, &cLast);
   //  measureFlag = 0;
   //Serial.println("meas");
   issue(&cCount, &cPrev, 4,&comp);
 
-  // if ((timer-wLast) >= 1) { 
+  // if ((timer-wLast) >= 1) {
   //  issus(&warn, &wLast);
   //Serial.println("calc");
   issue(&wCount, &wPrev, 0,&warn);
 
-  // if ((timer-dLast) >= 5) { 
+  // if ((timer-dLast) >= 5) {
   //  issus(&disp, &dLast);
   //Serial.println("warn");
   issue(&dCount, &dPrev, 4,&disp);
 
-  // if ((timer-sLast) >= 5) { 
+  // if ((timer-sLast) >= 5) {
   //  issus(&stat, &sLast);
   //Serial.println("disp");
   issue(&sCount, &sPrev, 4,&stat);
-  
+
   //Serial.println("stat");
   //Serial.print("issue ");
   //Serial.println(issue_count);
