@@ -1,6 +1,5 @@
 #include "structures.h"
 #include "TimerOne.h"
-int timer = 0;
 
 
 // menu is tapped
@@ -60,31 +59,6 @@ void timerInterrupt() {
     if (alarmAcknowledge) {
           alarmAcknowledge = alarmAcknowledge - 1;
     }
-  }
-  if (mCount == mP) {
-    mCount = 0;
-  } else {
-    mCount +=1;
-  }
-  if (cCount == cP) {
-    cCount = 0;
-  } else {
-    cCount +=1;
-  }
-  if (dCount == dP) {
-    dCount = 0;
-  } else {
-    dCount +=1;
-  }
-  if (wCount == wP) {
-    wCount = 0;
-  } else {
-    wCount +=1;
-  }
-  if (sCount == sP) {
-    sCount = 0;
-  } else {
-    sCount +=1;
   }
 }
 
@@ -271,6 +245,8 @@ void loop() {
       } 
       tft.fillRect(0, 250, 800, 100, CYAN);
      
+    } else if (cur == ANNUN) {
+      start = timer;
     }
   }
   
@@ -281,6 +257,7 @@ void loop() {
     Serial.println();
     */
     //Serial.println("before");
+    
     scheduler();
     //Serial.println("after");
   }

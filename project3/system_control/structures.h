@@ -62,16 +62,6 @@ volatile int sPrev=4;
   volatile int sLast=-5;
  */
 
-// measurement Flag:
-int measureFlag = 0;
-
-
-#define mP 4
-#define cP 4
-#define dP 4
-#define wP 0
-#define sP 4
-
 #define MINPRESSURE 10
 #define MAXPRESSURE 1000
 
@@ -98,6 +88,14 @@ int bufTail = 0;
 char inpulseBuffer[8];
 char pulsePrev = 0;
 
+
+// timers and scheduling flags
+long timer = 0;
+long timer_prev = 4;
+long start = 0;
+Bool computeFlag = FALSE;
+Bool disFlag = FALSE;
+Bool statusFlag = FALSE;
 
 typedef struct {
 	unsigned char* temperatureRawBuf;
@@ -190,6 +188,10 @@ int functionSelect() {
 }
 
 void measure(void* data) {
+  // set 
+  computeFlag = TRUE;
+  disFlag = TRUE;
+  statusFlag = TRUE;
   MeasureData* data_in = (MeasureData*) data;
   *(data_in->measurementSelection) = (char)functionSelect();
   Serial1.write(9);
@@ -456,20 +458,19 @@ void statusF (void* data) {
 // indicating # of taskes to issue
 int issue_count = 0;
 
-void issue(volatile int* count, volatile int* prev, volatile int p,  TCB* block) {
+void issue(long* interval, long* prev_time, long period, TCB* block, Bool* flag, int use_flag) {
   // Serial.print(*count); Serial.print(" "); Serial.print(p);Serial.print(" ");Serial.print(*prev);Serial.println();
-  if (*count == 0 && *prev == p) {
-    //Serial.print("Period ");
-    //Serial.println(p);
-    // replace execution with scheduling
-    // (*blocks->mytask)(blocks->taskDataPr);
-    insert(block);
-    issue_count += 1;
-
-    /*
-     * last = timer;
-     */
-
+  if (use_flag) {
+    if (*flag == TRUE) {
+      insert(block);
+      *flag = FALSE;
+      issue_count += 1;
+    }
+  } else {
+    if (*interval == 0 && *prev_time == period) {
+      insert(block);
+      issue_count+= 1;
+    }
   }
 }
 
@@ -478,43 +479,18 @@ void scheduler() {
   tail = NULL;
   issue_count = 0;
 
-  // if ((timer-mLast) >= 5 && (tempFlag | pressFlag | pulseFlag)) {
-  //  issus(&meas, &mLast);
-  //  measureFlag = 1;
-  // check and put task blocks into stack queue
-  issue(&mCount, &mPrev, 4,&meas);
+  long interval = (timer - start) % 5;
+  issue(&interval, &timer_prev, 4, &meas, NULL, 0);
+  issue(&interval, &timer_prev, 4, &comp, &computeFlag, 1);
+  issue(&interval, &timer_prev, 0, &warn, NULL, 0);
+  issue(&interval, &timer_prev, 4, &disp, &disFlag, 1);
+  issue(&interval, &timer_prev, 4, &stat, &statusFlag, 1);
+  
+  Serial.print("issue count:  ");Serial.print(issue_count);Serial.println();
+  Serial.print(interval);Serial.print(" ");Serial.print(timer_prev); Serial.println();
+  timer_prev = interval;
 
-  // if ((timer-cLast) >= 5 && measureFlag) {
-  //  issus(&comp, &cLast);
-  //  measureFlag = 0;
-  //Serial.println("meas");
-  issue(&cCount, &cPrev, 4,&comp);
-
-  // if ((timer-wLast) >= 1) {
-  //  issus(&warn, &wLast);
-  //Serial.println("calc");
-  issue(&wCount, &wPrev, 0,&warn);
-
-  // if ((timer-dLast) >= 5) {
-  //  issus(&disp, &dLast);
-  //Serial.println("warn");
-  issue(&dCount, &dPrev, 4,&disp);
-
-  // if ((timer-sLast) >= 5) {
-  //  issus(&stat, &sLast);
-  //Serial.println("disp");
-  issue(&sCount, &sPrev, 4,&stat);
-
-  //Serial.println("stat");
-  //Serial.print("issue ");
-  //Serial.println(issue_count);
-  mPrev = mCount;
-  cPrev = cCount;
-  dPrev = dCount;
-  wPrev = wCount;
-  sPrev = sCount;
   /*
-  Serial.print(mCount);Serial.print(" ");Serial.print(mPrev); Serial.println();
   Serial.print(cCount);Serial.print(" ");Serial.print(cPrev); Serial.println();
   Serial.print(dCount);Serial.print(" ");Serial.print(dPrev); Serial.println();
   Serial.print(wCount);Serial.print(" ");Serial.print(wPrev); Serial.println();
@@ -527,6 +503,6 @@ void scheduler() {
     (*cur->mytask)(cur->taskDataPr);
     cur = cur->next;
   }
-
+  
 }
 #endif
