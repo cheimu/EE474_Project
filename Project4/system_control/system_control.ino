@@ -56,15 +56,12 @@ void timerInterrupt() {
   }
 }
 
-void drawRect (int x, int y, int flag, String text) {
+void drawRect (int x, int y, int flag) {
   if (flag) {
-    tft.fillRect(x, y, 50, 50, GREEN);
+    tft.fillRect(x, y, 250, 60, GREEN);
   } else {
-     tft.fillRect(x, y, 50, 50, RED);
+     tft.fillRect(x, y, 250, 60, RED);
   }
-  tft.setCursor(x, y);
-  tft.setTextColor(BLACK);
-  tft.print(text);
 }
 
 void drawTop() {
@@ -88,35 +85,19 @@ void drawMenu() {
   tft.setTextSize(2);
   
   tft.setCursor(55, 20);
-  if (tempFlag) {
-    tft.fillRect(0, 0, 250, 60, GREEN);
-  } else {
-    tft.fillRect(0, 0, 250, 60, RED);
-  }
+  drawRect(0, 0, tempFlag);
   tft.print("Tempreture");
-
+  
   tft.setCursor(55, 84);
-  if (pulseFlag) {
-    tft.fillRect(0, 64, 250, 60, GREEN);
-  } else {
-    tft.fillRect(0, 64, 250, 60, RED);
-  }
+  drawRect(0, 64, pulseFlag);
   tft.print("Pulse Rate");
 
   tft.setCursor(40, 148);
-  if (pressFlag) {
-    tft.fillRect(0, 128, 250, 60, GREEN);
-  } else {
-    tft.fillRect(0, 128, 250, 60, RED);
-  }
+  drawRect(0, 128, pressFlag);
   tft.print("Blood Pressure");
 
   tft.setCursor(20, 212);
-  if (respFlag) {
-    tft.fillRect(0, 192, 250, 60, GREEN);
-  } else {
-    tft.fillRect(0, 192, 250, 60, RED);
-  }
+  drawRect(0, 192, respFlag);
   tft.print("Respiration Rate");
 
   tft.setTextSize(4);
@@ -225,6 +206,8 @@ void loop() {
         cur = ANNUN;
       } 
     } else if (cur == MENU) {
+      tft.setTextColor(BLACK);
+      tft.setTextSize(2);
       // menu level
       if (BACK_TRUE(p.x,p.y)) {
         cur = TOP;
@@ -232,18 +215,30 @@ void loop() {
       if (TEMP_FLAG(p.x,p.y)) {
         Serial.println(1);
         FLAG(tempFlag);
+        tft.setCursor(55, 20);
+        drawRect(0, 0, tempFlag);
+        tft.print("Tempreture");
         Serial.println(tempFlag);
       } 
       if (PULSE_FLAG(p.x,p.y)) {
-        Serial.println(3);
         FLAG(pulseFlag);
+        Serial.println(3);
+        tft.setCursor(55, 84);
+        drawRect(0, 64, pulseFlag);
+        tft.print("Pulse Rate");
       } 
       if (PRESS_FLAG(p.x,p.y)) {
-        Serial.println(2);
         FLAG(pressFlag);
+        Serial.println(2);
+        tft.setCursor(40, 148);
+        drawRect(0, 128, pressFlag);
+        tft.print("Blood Pressure");
       }
       if (RESP_FLAG(p.x, p.y)) {
         FLAG(respFlag);
+        tft.setCursor(20, 212);
+        drawRect(0, 192, respFlag);
+        tft.print("Respiration Rate");
       }
     } else if (cur == ANNUN) {
       if (ALARM_FLAG(p.x,p.y)) {
@@ -257,10 +252,11 @@ void loop() {
       Serial.print("Alarm flag ");Serial.println(alarmAcknowledge);
       Serial.print("Systo flag ");Serial.println(sysOutOfRange);
     }
-
+    /*
     if (prev == cur && cur == MENU) {
         drawMenu();
     }
+    */
     Serial.print(p.x);
     Serial.print(" ");
     Serial.print(p.y);
