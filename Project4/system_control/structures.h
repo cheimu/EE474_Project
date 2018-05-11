@@ -168,8 +168,8 @@ typedef struct {
 	unsigned short* measurementSelection;
 	unsigned char* tempCorrectedBuf;
 	unsigned char* bloodPressCorrectedBuf;
-	unsigned char* pulseRateRawBuf;
-  unsigned char* respirationRateRawBuf;
+	unsigned char* pulseRateCorrectedBuf;
+  unsigned char* respirationRateCorrectedBuf;
 } CommunicationsData;
 
 struct TCB {
@@ -342,7 +342,7 @@ void displayF (void* data) {
   if (tempFlag) {
     // print temperature
     if (tempOutOfRange == 1) {
-      if (tempHigh || tempLow) {
+      if ((tempHigh || tempLow) && alarmAcknowledge == 0) {
         tft.setTextColor(RED);  
       } else {
         tft.setTextColor(ORANGE);
@@ -396,7 +396,7 @@ void displayF (void* data) {
   if (pulseFlag) {
     // print pulse rate
     if (pulseOutOfRange == 1) {
-      if(pulseLow || pulseHigh) {
+      if((pulseLow || pulseHigh) && alarmAcknowledge == 0) {
         tft.setTextColor(RED);  
       } else {
         tft.setTextColor(ORANGE);  
@@ -415,7 +415,7 @@ void displayF (void* data) {
   if (respFlag) {
     // print pulse rate
     if (rrOutOfRange == 1) {
-      if (rrHigh || rrLow) {
+      if ((rrHigh || rrLow) && alarmAcknowledge == 0) {
         tft.setTextColor(RED);  
       } else {
         tft.setTextColor(YELLOW);

@@ -197,7 +197,7 @@ void setup() {
   comp = {&compute, &cData};
   // TCB* comp_ptr = &comp;
   // display tcb
-  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateRawBuf, batteryState_ptr};
+  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, batteryState_ptr};
   disp = {&displayF, &dData};
   // TCB* disp_ptr = &disp;
   // warning tcb
