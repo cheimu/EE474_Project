@@ -118,8 +118,11 @@ void drawMenu() {
   tft.print("Blood Pressure");
 
   tft.setCursor(20, 212);
-  // if (RespFlag)
-  tft.fillRect(0, 192, 250, 60, RED);
+  if (respFlag) {
+    tft.fillRect(0, 192, 250, 60, GREEN);
+  } else {
+    tft.fillRect(0, 192, 250, 60, RED);
+  }
   tft.print("Respiration Rate");
 
   tft.setTextSize(4);
@@ -244,6 +247,9 @@ void loop() {
       if (PRESS_FLAG(p.x,p.y)) {
         Serial.println(2);
         FLAG(pressFlag);
+      }
+      if (RESP_FLAG(p.x, p.y)) {
+        FLAG(respFlag);
       }
     } else if (cur == ANNUN) {
       if (ALARM_FLAG(p.x,p.y)) {

@@ -427,7 +427,7 @@ void displayF (void* data) {
     tft.print((char)data_in->respirationRateRawBuf[0]);
     tft.print((char)data_in->respirationRateRawBuf[1]);
     tft.print((char)data_in->respirationRateRawBuf[2]);
-    tft.print(" BPM                  |");
+    tft.print(" BPM            |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
   }
