@@ -21,10 +21,12 @@
 unsigned char temperatureRawBuf[8];
 unsigned char bloodPressRawBuf[16];
 unsigned char pulseRateRawBuf[8];
+unsigned char respirationRateRawBuf[8];
 
 unsigned char tempCorrectedBuf[8];
 unsigned char bloodPressCorrectedBuf[16];
 unsigned char pulseRateCorrectedBuf[8];
+unsigned char respirationRateCorrectedBuf[8];
 
 unsigned short functionSelectValue;
 unsigned short measurementSelection = 0b111;
@@ -115,29 +117,34 @@ void setup() {
   tft.setCursor(0, 0);
   tft.setTextColor(GREEN); tft.setTextSize(1);
   pinMode(13, OUTPUT);
-  Timer1.initialize(1000000);
-  Timer1.attachInterrupt(timerInterrupt, 1000000);
+  Timer1.initialize(500000);
+  Timer1.attachInterrupt(timerInterrupt, 5000000);
   Serial1.begin(9600);
 
   // measure tcb
-  mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, &measurementSelection};
+  mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, &measurementSelection};
   meas = {&measure, &mData};
   // TCB* meas_ptr = &meas;
   // compute tcb
-  cData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, &measurementSelection, tempCorrectedBuf,  bloodPressCorrectedBuf, pulseRateCorrectedBuf};
+  cData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, &measurementSelection, tempCorrectedBuf,  bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf};
   comp = {&compute, &cData};
   // TCB* comp_ptr = &comp;
   // display tcb
-  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, batteryState_ptr};
+  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateRawBuf, batteryState_ptr};
   disp = {&displayF, &dData};
   // TCB* disp_ptr = &disp;
   // warning tcb
-  wData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, batteryState_ptr};
+  wData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, batteryState_ptr};
   warn = {&warningAlarm, &wData};
   // TCB* warn_ptr = &warn;
   // status tcb
   sData = {batteryState_ptr};
   stat = {&statusF, &sData};
+ 
+  temp_rb = {1, 0, 0, {0,0,0,0,0,0,0,0}};
+  pulse_rb = {1, 0, 0, {0,0,0,0,0,0,0,0}};
+  resp_rb = {1, 0, 0, {0,0,0,0,0,0,0,0}};
+  
   // TCB* stat_ptr = &stat;
 
   // insert(meas_ptr);
@@ -244,7 +251,9 @@ void loop() {
         tft.fillRect(170, 100, 50, 50, RED);
       } 
       tft.fillRect(0, 250, 800, 100, CYAN);
-     
+      if (respFlag) {
+        
+      }
     } else if (cur == ANNUN) {
       start = timer;
     }
