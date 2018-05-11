@@ -1,5 +1,16 @@
 #ifndef UNO
 #define UNO
+char inbyte;
+unsigned int temperatureRaw = 75;
+unsigned int systolicPressRaw = 80;
+unsigned int diastolicPressRaw = 80;
+unsigned int pulseRateRaw = 75;
+unsigned int respirationRateRaw =25;
+int tempPin = A3;
+int bpPin = A4;
+int prPin = 7;
+int rrPin = 8;
+int val = 0;
 
 enum myBool { EVEN = 0, ODD = 1 };
 typedef enum myBool Even_ODD;
@@ -23,92 +34,53 @@ typedef struct {
 
 void measure (MeasureData* data_in, char which) {
 
-  if (which == 2) {
-    unsigned int temp = *(data_in->temperatureRaw);
-    if (temp > 50) {
-      tempUp = 0;
-    } else if (temp < 15) {
-      tempUp = 1;
-    }
-    if (tempUp == 1) {
-      if (times2 == EVEN) {
-          *(data_in->temperatureRaw) += 2;
-      } else {
-          *(data_in->temperatureRaw) -= 1;
-      }
-    } else {
-          if (times2 == EVEN) {
-          *(data_in->temperatureRaw) -= 2;
-      } else {
-          *(data_in->temperatureRaw) += 1;
-      }
-    }
-     if (times2 == EVEN) {
-      times2 = ODD;
-    } else {
-      times2 = EVEN;
-    }
+  MeasureData* data_in = (MeasureData*) data;
+  // temperature
+  if (which == 1) {
+   
+         
+        *(data_in->temperatureRaw) =  analogRead(tempPin);     // read the input pin;   
+  }
+
+  // blood pressure
+ // if (which == 2) {
+      
+       
+          
+    //    pulseRateRaw = analogRead(bpPin);     // read the input pin
+          
+
+    
+  //}
+
+  if (which == 3) {
+     unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(prPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
+        }
+        *(data_in->pulseRateRaw) = count;   
   }
 
   if (which == 4) {
-    /*
-    unsigned int pulse = *(data_in->pulseRateRaw);
-    if (pulse > 40) {
-      pulseUp = 0;
-    } else if (pulse < 15) {
-      pulseUp = 1;
-    }
-  
-    if (pulseUp) {
-      if (times4 == ODD) {
-          *(data_in->pulseRateRaw) += 3;
-      } else {
-          *(data_in->pulseRateRaw) -= 1;
-      }
-    } else {
-      if (times4 == ODD) {
-          *(data_in->pulseRateRaw) -= 3;
-      } else {
-          *(data_in->pulseRateRaw) += 1;
-      }
-    }
-    if (times4 == EVEN) {
-      times4 = ODD;
-    } else {
-      times4 = EVEN;
-    }
-    */
-
-    
-  }
-
-  if (which == 3) {
-    if (systoDone == 0) {
-        if (times3 == EVEN) {
-            *(data_in->systolicPressRaw) += 3;
-        } else {
-            *(data_in->systolicPressRaw) -= 1;
+     unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(rrPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
         }
-        if (*(data_in->systolicPressRaw) > 100) {
-            systoDone = 1;
-            *(data_in->systolicPressRaw) = 80;
-        }
-    } else {
-        if (times3 == EVEN) {
-            *(data_in->diastolicPressRaw) -= 2;
-        } else {
-            *(data_in->diastolicPressRaw) += 1;
-        }
-        if (*(data_in->diastolicPressRaw) < 40) {
-            systoDone = 0;
-            *(data_in->diastolicPressRaw) = 80;
-        }
-    }
-    if (times3 == EVEN) {
-      times3 = ODD;
-    } else {
-      times3 = EVEN;
-    }
+        *(data_in->respirationRateRaw) = count;   
   }
 
 }

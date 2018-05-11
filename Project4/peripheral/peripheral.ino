@@ -1,19 +1,15 @@
 #include "uno.h"
 #define START 9
 #include <Time.h>
-char inbyte;
-unsigned int temperatureRaw = 75;
-unsigned int systolicPressRaw = 80;
-unsigned int diastolicPressRaw = 80;
-unsigned int pulseRateRaw = 75;
-unsigned int respirationRateRaw =25;
-int inPin = 7;
-int val = 0;
+
 
 void setup()
 {
   Serial.begin(9600);
-  pinMode(inPin, INPUT);
+  pinMode(tempPin, INPUT);
+  pinMode(bpPin, INPUT);
+  pinMode(prPin, INPUT);
+  pinMode(rrPin, INPUT);
 }
 
 
@@ -26,88 +22,40 @@ void loop()
        char funcIndex = Serial.read(); // s = 3'bxxx
        char endByte = Serial.read();
 
+      // temperature
       if ((funcIndex & 0b001)) {
-        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        //measure(&data, 2);
-        unsigned long start = micros();
-        int cur = 0;
-        int prev = 0;
-        int count = 0;
-        while ((micros()) - start < (unsigned long)1000) {
-          cur = digitalRead(inPin);     // read the input pin
-          if (prev == 0 && cur == 1) {
-            count = count + 1;
-          }
-          prev = cur;
-        }
-        temperatureRaw = count;   
+        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        measure(&data, 1);
+        
         
       }
+
+      // blood pressure
 	  if ((funcIndex & 0b100)) {
-        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        //measure(&data, 3);
+        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        measure(&data, 2);
         
-        unsigned long start = micros();
-        int cur = 0;
-        int prev = 0;
-        int count = 0;
-        while ((micros()) - start < (unsigned long)1000) {
-          cur = digitalRead(inPin);     // read the input pin
-          if (prev == 0 && cur == 1) {
-            count = count + 1;
-          }
-          prev = cur;
-        }
-        pulseRateRaw = count;   
+      
     }
 
-    
+    // pulse rate
 	  if ((funcIndex & 0b010)) {
-        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        //measure(&data, 3);
-        unsigned long start = micros();
-        int cur = 0;
-        int prev = 0;
-        int count = 0;
-        while ((micros()) - start < (unsigned long)1000) {
-          cur = digitalRead(inPin);     // read the input pin
-          if (prev == 0 && cur == 1) {
-            count = count + 1;
-          }
-          prev = cur;
-        }
-        pulseRateRaw = count;   
+        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        measure(&data, 3);
+       
     }
 
+    // respiration rate
     if ((funcIndex & 0b1000)) {
-      //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
-        //measure(&data, 4);
-        unsigned long start = micros();
-        int cur = 0;
-        int prev = 0;
-        int count = 0;
-        while ((micros()) - start < (unsigned long)1000) {
-          cur = digitalRead(inPin);     // read the input pin
-          if (prev == 0 && cur == 1) {
-            count = count + 1;
-          }
-          prev = cur;
-        }
-        respirationRateRaw = count;   
+        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        measure(&data, 4);
+       
     }
 
     Serial.write(9);
 	  Serial.write((char)temperatureRaw);
 	  Serial.write((char)systolicPressRaw);
-    /*
-    Serial.println("systo");
-    Serial.println(systolicPressRaw);
-	  */
 	  Serial.write((char)diastolicPressRaw);
-    /*
-    Serial.println("diasto");
-    Serial.println(diastolicPressRaw);
-	  */
 	  Serial.write((char)pulseRateRaw);
     Serial.write((char)respirationRateRaw);
 	  Serial.write(0);
