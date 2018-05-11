@@ -43,7 +43,7 @@ void measure (MeasureData* data_in, char which) {
   }
 
   // blood pressure
- // if (which == 2) {
+ // if (which == 3) {
       
        
           
@@ -53,7 +53,7 @@ void measure (MeasureData* data_in, char which) {
     
   //}
 
-  if (which == 3) {
+  if (which == 2) {
      unsigned long start = micros();
         int cur = 0;
         int prev = 0;

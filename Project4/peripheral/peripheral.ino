@@ -23,26 +23,28 @@ void loop()
        char endByte = Serial.read();
 
       // temperature
-      if ((funcIndex & 0b001)) {
+      if ((funcIndex & 0b0001)) {
         MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
         measure(&data, 1);
         
         
       }
 
-      // blood pressure
-	  if ((funcIndex & 0b100)) {
-        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
-        measure(&data, 2);
-        
-      
-    }
+  
 
     // pulse rate
-	  if ((funcIndex & 0b010)) {
+	  if ((funcIndex & 0b0010)) {
+        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        measure(&data, 2);
+       
+    }
+
+        // blood pressure
+    if ((funcIndex & 0b0100)) {
         MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
         measure(&data, 3);
-       
+        
+      
     }
 
     // respiration rate
