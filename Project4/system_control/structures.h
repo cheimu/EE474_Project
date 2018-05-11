@@ -142,8 +142,8 @@ typedef struct {
 typedef struct {
 	unsigned char* tempCorrectedBuf;
 	unsigned char* bloodPressCorrectedBuf;
-	unsigned char* pulseRateRawBuf;
-  unsigned char* respirationRateRawBuf;
+	unsigned char* pulseRateCorrectedBuf;
+  unsigned char* respirationRateCorrectedBuf;
 	unsigned short* batteryState;
 } DisplayData;
 
@@ -405,9 +405,9 @@ void displayF (void* data) {
       tft.setTextColor(GREEN);
     }
     tft.print("| Pulse Rate: ");
-    tft.print((char)data_in->pulseRateRawBuf[0]);
-    tft.print((char)data_in->pulseRateRawBuf[1]);
-    tft.print((char)data_in->pulseRateRawBuf[2]);
+    tft.print((char)data_in->pulseRateCorrectedBuf[0]);
+    tft.print((char)data_in->pulseRateCorrectedBuf[1]);
+    tft.print((char)data_in->pulseRateCorrectedBuf[2]);
     tft.print(" BPM                  |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
@@ -424,9 +424,9 @@ void displayF (void* data) {
       tft.setTextColor(GREEN);
     }
     tft.print("| Respiration Rate: ");
-    tft.print((char)data_in->respirationRateRawBuf[0]);
-    tft.print((char)data_in->respirationRateRawBuf[1]);
-    tft.print((char)data_in->respirationRateRawBuf[2]);
+    tft.print((char)data_in->respirationRateCorrectedBuf[0]);
+    tft.print((char)data_in->respirationRateCorrectedBuf[1]);
+    tft.print((char)data_in->respirationRateCorrectedBuf[2]);
     tft.print(" BPM            |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");

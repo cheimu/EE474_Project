@@ -184,8 +184,8 @@ void setup() {
   tft.begin(identifier);
   drawTop();
   pinMode(13, OUTPUT);
-  Timer1.initialize(500000);
-  Timer1.attachInterrupt(timerInterrupt, 5000000);
+  Timer1.initialize(1000000);
+  Timer1.attachInterrupt(timerInterrupt, 1000000);
   Serial1.begin(9600);
 
   // measure tcb
@@ -287,6 +287,7 @@ void loop() {
   }
   
   if (cur == ANNUN) {
+    Serial.print("ANNU\n");
     scheduler();
   }
   prev = cur;

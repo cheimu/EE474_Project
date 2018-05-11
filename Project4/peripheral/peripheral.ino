@@ -6,6 +6,7 @@ unsigned int temperatureRaw = 75;
 unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
 unsigned int pulseRateRaw = 75;
+unsigned int respirationRateRaw =25;
 int inPin = 7;
 int val = 0;
 
