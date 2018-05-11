@@ -37,6 +37,9 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
+#define ORANGE  0xFDAA
+#define LYELLOW 0xFFD7
+#define LPURPLE 0xAC7F 
 
 Elegoo_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
@@ -284,7 +287,6 @@ void compute(void* data) {
 void displayF (void* data) {
   // calculate whethether systolic or diastolic pressure is out of range
   tft.fillScreen(BLACK);
-  tft.fillRect(0, 200, 40, 40, GREEN);
   tft.setCursor(0,0);
   tft.print("   E-Doc: Your Private Doctor (^ w ^)   ");
   DisplayData* data_in = (DisplayData*) data;
@@ -293,7 +295,7 @@ void displayF (void* data) {
   if (tempFlag) {
     // print temperature
     if (tempOutOfRange == 1) {
-      tft.setTextColor(YELLOW);
+      tft.setTextColor(ORANGE);
     } else {
       tft.setTextColor(GREEN);
     }
@@ -307,11 +309,11 @@ void displayF (void* data) {
   if (pulseFlag) {
     // print systolic pressure
     if (sysOutOfRange == 1 && !sysRed) {
-      tft.setTextColor(YELLOW);
+      tft.setTextColor(ORANGE);
     } else if (sysRed == 1 && alarmAcknowledge == 0) {
         tft.setTextColor(RED);
     } else if (sysRed == 1 && alarmAcknowledge != 0) {
-      tft.setTextColor(YELLOW);
+      tft.setTextColor(ORANGE);
     } else{
         tft.setTextColor(GREEN);
     }
@@ -327,7 +329,7 @@ void displayF (void* data) {
 
     // print diastolic pressure
     if (diasOutOfRange == 1) {
-      tft.setTextColor(YELLOW);
+      tft.setTextColor(ORANGE);
     } else {
       tft.setTextColor(GREEN);
     }
@@ -342,7 +344,7 @@ void displayF (void* data) {
   if (pressFlag) {
     // print pulse rate
     if (pulseOutOfRange == 1) {
-      tft.setTextColor(YELLOW);
+      tft.setTextColor(ORANGE);
     } else {
       tft.setTextColor(GREEN);
     }
@@ -378,7 +380,27 @@ void displayF (void* data) {
   tft.print("|                                      |");
   tft.print("|--------------------------------------|");
   tft.print("     We hope you are in good health!    ");
-  tft.fillRect(0, 250, 800, 100, CYAN);
+
+  // Acknowledge area
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(50, 212);
+  if (alarmAcknowledge != 0) {
+    tft.fillRect(0, 192, 250, 60, GREEN);
+  } else {
+    tft.fillRect(0, 192, 250, 60, RED);
+  }
+  tft.print("Acknowledge");
+
+  // Back area
+  tft.setTextSize(4);
+  tft.setCursor(70, 270);
+  tft.fillRect(0, 256, 250, 60, LPURPLE);
+  tft.print("BACK");
+  
+  tft.setTextSize(1);
+  tft.setTextColor(GREEN);
+  tft.setCursor(0, 0);
 }
 
 void warningAlarm (void* data) {

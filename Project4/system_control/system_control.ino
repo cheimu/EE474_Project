@@ -3,19 +3,18 @@
 
 
 // menu is tapped
-#define MENU_TRUE(x,y) ((x < 720) && (x > 330) && (y < 800) && (y > 520))
+#define MENU_TRUE(x,y) ((y < 900) && (y > 500))
 // ANNUNCIATION is tapped
-#define ANNUN_TRUE(x,y) ((x < 720) && (x > 330) && (y < 420) && (y > 150))
+#define ANNUN_TRUE(x,y) ((y < 450) && (y > 0))
 // return is pressed
-#define BACK_TRUE(x,y) ((y < 200) && (y > 0))
+#define BACK_TRUE(x,y) ((y < 180) && (y > 0))
 // flags set & unset
 #define FLAG(x) x=!x
-#define TEMP_FLAG(x,y) ((x < 360) && (x > 160) && (y < 612) && (y > 480))
-#define PULSE_FLAG(x,y) ((x < 610 ) && (x > 420) && (y < 612) && (y > 480))
-#define PRESS_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
-#define ALARM_FLAG(x,y) ((x < 300) && (x > 0) && (y < 370) && (y > 270))
-
-
+#define TEMP_FLAG(x,y)  ((y < 900) && (y > 720))
+#define PULSE_FLAG(x,y) ((y < 720) && (y > 540))
+#define PRESS_FLAG(x,y) ((y < 540) && (y > 360))
+#define RESP_FLAG(x,y)  ((y < 360) && (y > 180))
+#define ALARM_FLAG(x,y) ((y < 360) && (y > 180))
 
 // values
 unsigned char temperatureRawBuf[8];
@@ -33,7 +32,6 @@ unsigned short measurementSelection = 0b111;
 unsigned short* batteryState_ptr = &batteryState;
 
 // task blocks and task queue
-
 /*
 TCB meas;
 TCB comp;
@@ -60,6 +58,76 @@ void timerInterrupt() {
           alarmAcknowledge = alarmAcknowledge - 1;
     }
   }
+}
+
+void drawRect (int x, int y, int flag, String text) {
+  if (flag) {
+    tft.fillRect(x, y, 50, 50, GREEN);
+  } else {
+     tft.fillRect(x, y, 50, 50, RED);
+  }
+  tft.setCursor(x, y);
+  tft.setTextColor(BLACK);
+  tft.print(text);
+}
+
+void drawTop() {
+  tft.fillScreen(BLACK);
+  tft.fillRect(0, 0, 250, 160, LYELLOW);
+  tft.setCursor(70,60);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(4);
+  tft.print("MENU");
+  tft.fillRect(0, 160, 250, 160, LPURPLE);
+  tft.setCursor(60,230);
+  tft.print("STATS");
+  tft.setTextSize(1);
+  tft.setTextColor(GREEN);
+  tft.setCursor(0, 0);
+}
+
+void drawMenu() {
+  tft.fillScreen(BLACK);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  
+  tft.setCursor(55, 20);
+  if (tempFlag) {
+    tft.fillRect(0, 0, 250, 60, GREEN);
+  } else {
+    tft.fillRect(0, 0, 250, 60, RED);
+  }
+  tft.print("Tempreture");
+
+  tft.setCursor(55, 84);
+  if (pulseFlag) {
+    tft.fillRect(0, 64, 250, 60, GREEN);
+  } else {
+    tft.fillRect(0, 64, 250, 60, RED);
+  }
+  tft.print("Pulse Rate");
+
+  tft.setCursor(40, 148);
+  if (pressFlag) {
+    tft.fillRect(0, 128, 250, 60, GREEN);
+  } else {
+    tft.fillRect(0, 128, 250, 60, RED);
+  }
+  tft.print("Blood Pressure");
+
+  tft.setCursor(20, 212);
+  // if (RespFlag)
+  tft.fillRect(0, 192, 250, 60, RED);
+  tft.print("Respiration Rate");
+
+  tft.setTextSize(4);
+  tft.setCursor(70, 270);
+  tft.fillRect(0, 256, 250, 60, LPURPLE);
+  tft.print("BACK");
+  
+  tft.setTextSize(1);
+  tft.setTextColor(GREEN);
+  tft.setCursor(0, 0);
 }
 
 void setup() {
@@ -109,11 +177,7 @@ void setup() {
     identifier=0x9328;
   }
   tft.begin(identifier);
-  tft.fillScreen(BLACK);
-  tft.fillRect(90, 50, 80, 80, GREEN);
-  tft.fillRect(90, 200, 80, 80, GREEN);
-  tft.setCursor(0, 0);
-  tft.setTextColor(GREEN); tft.setTextSize(1);
+  drawTop();
   pinMode(13, OUTPUT);
   Timer1.initialize(1000000);
   Timer1.attachInterrupt(timerInterrupt, 1000000);
@@ -139,20 +203,6 @@ void setup() {
   sData = {batteryState_ptr};
   stat = {&statusF, &sData};
   // TCB* stat_ptr = &stat;
-
-  // insert(meas_ptr);
-  // insert(comp_ptr);
-  // insert(warn_ptr);
-  // insert(disp_ptr);
-  // insert(stat_ptr);
-}
-
-void drawRect (int x, int y, int flag) {
-  if (flag) {
-    tft.fillRect(x, y, 50, 50, GREEN);
-  } else {
-     tft.fillRect(x, y, 50, 50, RED);
-  }
 }
 
 void loop() {
@@ -202,15 +252,8 @@ void loop() {
     }
 
     if (prev == cur && cur == MENU) {
-      if (TEMP_FLAG(p.x,p.y)) {
-        drawRect(10, 100, tempFlag);
-      } else if (PRESS_FLAG(p.x,p.y)) {
-        drawRect(170, 100, pressFlag);
-      } else if (PULSE_FLAG(p.x,p.y)) {
-        drawRect(90, 100, pulseFlag);
-      }
+        drawMenu();
     }
-    
     Serial.print(p.x);
     Serial.print(" ");
     Serial.print(p.y);
@@ -220,46 +263,18 @@ void loop() {
   if (cur != prev) {
     if (cur == TOP) {
       Serial.print("TOP\n");
-      tft.fillScreen(BLACK);
-      tft.fillRect(90, 50, 80, 80, GREEN);
-      tft.fillRect(90, 200, 80, 80, GREEN);
+      drawTop();
     }
     else if (cur == MENU) {
       Serial.print("Menu\n");
-      tft.fillScreen(BLACK);
-      if (tempFlag) {
-        tft.fillRect(10, 100, 50, 50, GREEN);
-      } else {
-        tft.fillRect(10, 100, 50, 50, RED);
-      }
-      
-      if (pulseFlag) {
-        tft.fillRect(90, 100, 50, 50, GREEN);
-      } else {
-        tft.fillRect(90, 100, 50, 50, RED);
-      }
-      if (pressFlag) {
-        tft.fillRect(170, 100, 50, 50, GREEN);
-      } else {
-        tft.fillRect(170, 100, 50, 50, RED);
-      } 
-      tft.fillRect(0, 250, 800, 100, CYAN);
-     
+      drawMenu();
     } else if (cur == ANNUN) {
       start = timer;
     }
   }
   
   if (cur == ANNUN) {
-    /*
-    Serial.println("counters: ");
-    Serial.print(mCount);Serial.print(cCount);Serial.print(dCount);Serial.print(wCount);
-    Serial.println();
-    */
-    //Serial.println("before");
-    
     scheduler();
-    //Serial.println("after");
   }
   prev = cur;
 }
