@@ -1,7 +1,6 @@
 #include "structures.h"
 #include "TimerOne.h"
 
-
 // menu is tapped
 #define MENU_TRUE(x,y) ((y < 900) && (y > 500))
 // ANNUNCIATION is tapped
@@ -47,14 +46,9 @@ WarningAlarmData wData;
 Status sData;
 */
 
-// screen state
-enum state { TOP = 0, MENU = 1, ANNUN = 2, EXPAND = 3 };
-typedef enum state SCR_STATE;
-SCR_STATE cur = TOP;
-SCR_STATE prev = TOP;
 
 void timerInterrupt() {
-  timer++;
+    timer++;
   if (sysRed) {
     if (alarmAcknowledge) {
           alarmAcknowledge = alarmAcknowledge - 1;
@@ -197,7 +191,7 @@ void setup() {
   comp = {&compute, &cData};
   // TCB* comp_ptr = &comp;
   // display tcb
-  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateRawBuf, batteryState_ptr};
+  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, batteryState_ptr};
   disp = {&displayF, &dData};
   // TCB* disp_ptr = &disp;
   // warning tcb
@@ -282,12 +276,14 @@ void loop() {
       Serial.print("Menu\n");
       drawMenu();
     } else if (cur == ANNUN) {
-      start = timer;
-    }
+      Serial.println("start reset");
+      measureFlag = TRUE;   
+}
   }
   
   if (cur == ANNUN) {
     Serial.print("ANNU\n");
+    
     scheduler();
   }
   prev = cur;

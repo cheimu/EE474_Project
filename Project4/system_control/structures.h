@@ -72,6 +72,12 @@ enum myBool2 {FALSE = 0, TRUE = 1};
 typedef enum myBool2 Bool;
 unsigned short alarmAcknowledge=0;
 
+// screen state
+enum state { TOP = 0, MENU = 1, ANNUN = 2, EXPAND = 3 };
+typedef enum state SCR_STATE;
+SCR_STATE cur = TOP;
+SCR_STATE prev = TOP;
+
 unsigned short batteryState = 200;
 unsigned char tempOutOfRange = 0;
 unsigned char pulseOutOfRange = 0;
@@ -114,7 +120,9 @@ char respPrev = 0;
 // timers and scheduling flags
 long timer = 0;
 long timer_prev = 4;
+long interval = 0;
 long start = 0;
+Bool measureFlag = FALSE;
 Bool computeFlag = FALSE;
 Bool disFlag = FALSE;
 Bool statusFlag = FALSE;
@@ -489,7 +497,7 @@ void warningAlarm (void* data) {
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
   int respFixed = (int) *(data_in->respirationRateRawBuf);
-  respFixed = 8 + 3 * respFixed;
+  respFixed = 7 + 3 * respFixed;
 
   // Temperature
   if (tempFixed < 34.295 || tempFixed > 39.69) {
@@ -586,7 +594,8 @@ void issue(long* interval, long* prev_time, long period, TCB* block, Bool* flag,
       issue_count += 1;
     }
   } else {
-    if (*interval == 0 && *prev_time == period) {
+    if ((*interval == 0 && *prev_time == period) || measureFlag == TRUE) {
+      *flag = FALSE;
       insert(block);
       issue_count+= 1;
     }
@@ -597,9 +606,11 @@ void scheduler() {
   head = NULL;
   tail = NULL;
   issue_count = 0;
-
-  long interval = (timer - start) % 5;
-  issue(&interval, &timer_prev, 4, &meas, NULL, 0);
+  if (prev == cur) {
+    Serial.println("intervel recompute");
+    interval = (timer - start) % 5;
+  }
+  issue(&interval, &timer_prev, 4, &meas, &measureFlag, 0);
   issue(&interval, &timer_prev, 4, &comp, &computeFlag, 1);
   issue(&interval, &timer_prev, 0, &warn, NULL, 0);
   issue(&interval, &timer_prev, 4, &disp, &disFlag, 1);
