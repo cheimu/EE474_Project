@@ -26,8 +26,20 @@ void loop()
        char endByte = Serial.read();
 
       if ((funcIndex & 0b001)) {
-        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        measure(&data, 2);
+        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
+        //measure(&data, 2);
+        unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(inPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
+        }
+        temperatureRaw = count;   
         
       }
 	  if ((funcIndex & 0b100)) {
@@ -50,8 +62,37 @@ void loop()
 
     
 	  if ((funcIndex & 0b010)) {
-        MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
-        measure(&data, 3);
+        //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw};
+        //measure(&data, 3);
+        unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(inPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
+        }
+        pulseRateRaw = count;   
+    }
+
+    if ((funcIndex & 0b1000)) {
+      //MeasureData data = {&temperatureRaw, &systolicPressRaw, &diastolicPressRaw, &pulseRateRaw, &respirationRateRaw};
+        //measure(&data, 4);
+        unsigned long start = micros();
+        int cur = 0;
+        int prev = 0;
+        int count = 0;
+        while ((micros()) - start < (unsigned long)1000) {
+          cur = digitalRead(inPin);     // read the input pin
+          if (prev == 0 && cur == 1) {
+            count = count + 1;
+          }
+          prev = cur;
+        }
+        respirationRateRaw = count;   
     }
 
     Serial.write(9);
@@ -67,6 +108,7 @@ void loop()
     Serial.println(diastolicPressRaw);
 	  */
 	  Serial.write((char)pulseRateRaw);
+    Serial.write((char)respirationRateRaw);
 	  Serial.write(0);
    
   }

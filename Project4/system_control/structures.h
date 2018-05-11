@@ -77,21 +77,40 @@ unsigned char tempOutOfRange = 0;
 unsigned char pulseOutOfRange = 0;
 unsigned char sysOutOfRange = 0;
 unsigned char diasOutOfRange = 0;
+unsigned char rrOutOfRange = 0;
 Bool tempHigh = FALSE;
+Bool tempLow = FALSE;
+Bool rrLow = FALSE;
+Bool rrHigh = FALSE;
 Bool pulseLow = FALSE;
+Bool pulseHigh = FALSE;
 Bool lowPower = FALSE;
 Bool sysRed = FALSE;
 
+
 // pulse ring buffer
-void put(char val, int size);
-char get(int size);
-int lead = 1;
-int bufHead = 0;
-int bufTail = 0;
-char inpulseBuffer[8];
+struct ringBuffer {
+  int lead;
+  int bufHead;
+  int bufTail;
+  char inpulseBuffer[8];
+};
+
+
+typedef struct ringBuffer ringBuffer;
+ringBuffer pulse_rb;
+ringBuffer temp_rb;
+ringBuffer resp_rb;
+//ringBuffer* pulse_rb_ptr = &pulse_rb;
+//ringBuffer* temp_rb_ptr = &temp_rb;
+//ringBuffer* resp_rb_ptr = &resp_rb;
+
+void put_data(char val, int size_i, ringBuffer* buf);
+char get_data(int size_i, ringBuffer* buf);
+
 char pulsePrev = 0;
-
-
+char tempPrev = 0;
+char respPrev = 0; 
 // timers and scheduling flags
 long timer = 0;
 long timer_prev = 4;
@@ -104,6 +123,7 @@ typedef struct {
 	unsigned char* temperatureRawBuf;
 	unsigned char* bloodPressRawBuf;
 	unsigned char* pulseRateRawBuf;
+  unsigned char* respirationRateRawBuf;
 	unsigned short* measurementSelection;
 } MeasureData;
 
@@ -111,16 +131,19 @@ typedef struct {
 	unsigned char* temperatureRawBuf;
 	unsigned char* bloodPressRawBuf;
 	unsigned char* pulseRateRawBuf;
+  unsigned char* respirationRateRawBuf;
 	unsigned short* measurementSelection;
 	unsigned char* tempCorrectedBuf;
 	unsigned char* bloodPressCorrectedBuf;
 	unsigned char* pulseRateCorrectedBuf;
+  unsigned char* respirationRateCorrectedBuf;
 } ComputeData;
 
 typedef struct {
 	unsigned char* tempCorrectedBuf;
 	unsigned char* bloodPressCorrectedBuf;
 	unsigned char* pulseRateRawBuf;
+  unsigned char* respirationRateRawBuf;
 	unsigned short* batteryState;
 } DisplayData;
 
@@ -128,6 +151,7 @@ typedef struct {
 	unsigned char* temperatureRawBuf;
 	unsigned char* bloodPressRawBuf;
 	unsigned char* pulseRateRawBuf;
+  unsigned char* respirationRateRawBuf;
 	unsigned short* batteryState;
 } WarningAlarmData;
 
@@ -145,6 +169,7 @@ typedef struct {
 	unsigned char* tempCorrectedBuf;
 	unsigned char* bloodPressCorrectedBuf;
 	unsigned char* pulseRateRawBuf;
+  unsigned char* respirationRateRawBuf;
 } CommunicationsData;
 
 struct TCB {
@@ -166,6 +191,7 @@ void deleteNode(TCB* node);
 int tempFlag = 1;
 int pulseFlag = 1;
 int pressFlag = 1;
+int respFlag = 1;
 
 // task blocks and task queue
 TCB meas;
@@ -187,6 +213,8 @@ int functionSelect() {
     s += 0b10;
   if (pressFlag)
     s += 0b100;
+  if (respFlag)
+    s += 0b1000;
   return s;
 }
 
@@ -201,13 +229,14 @@ void measure(void* data) {
   Serial1.write(*(data_in->measurementSelection));
   Serial1.write(0);
 
-  while (Serial1.available() < 6);
+  while (Serial1.available() < 7);
 
   char inbyte = Serial1.read();
   char temp_rx = Serial1.read();
   char systo_rx = Serial1.read();
   char diasto_rx = Serial1.read();
   char pr_rx = Serial1.read();
+  char rr_rx = Serial1.read();
   char endbyte = Serial1.read();
   Serial.println("Received");
   Serial.print((int)inbyte); Serial.print(" ");
@@ -215,6 +244,7 @@ void measure(void* data) {
   Serial.print((int)systo_rx);Serial.print(" ");
   Serial.print((int)diasto_rx);Serial.print(" ");
   Serial.print((int)pr_rx);Serial.print(" ");
+  Serial.print((int)rr_rx);Serial.print(" ");
   Serial.print((int)endbyte);Serial.print(" ");
   Serial.println();
 
@@ -232,11 +262,15 @@ void measure(void* data) {
   if (*(data_in->measurementSelection) & 0b100) {
      *(data_in->pulseRateRawBuf) = pr_rx;
   }
+   if (*(data_in->measurementSelection) & 0b1000) {
+     *(data_in->respirationRateRawBuf) = rr_rx;
+  }
   Serial.println("Measured");
   Serial.print((int)data_in->temperatureRawBuf[0]); Serial.print(" ");
   Serial.print((int)data_in->bloodPressRawBuf[0]);Serial.print(" ");
   Serial.print((int)data_in->bloodPressRawBuf[8]);Serial.print(" ");
   Serial.print((int)data_in->pulseRateRawBuf[0]);Serial.print(" ");
+  Serial.print((int)data_in->respirationRateRawBuf[0]);Serial.print(" ");
   Serial.println();
 }
 
@@ -257,11 +291,21 @@ void compute(void* data) {
   diasFixed = 6 + 1.5 * diasFixed;
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
+  int respFixed = (int) *(data_in->respirationRateRawBuf);
+  respFixed = 7 + 3 * respFixed;
 
   // add to buffer
   if (pulseFixed > (1.15 * pulsePrev) || pulseFixed < (0.85 * pulsePrev)) {
-    put((char)pulseFixed, 9);
+    put_data((char)pulseFixed, 9, &pulse_rb);
     pulsePrev = pulseFixed;
+  }
+  if (tempFixed > (1.15 * tempPrev) || tempFixed < (0.85 * tempPrev)) {
+    put_data((char)tempFixed, 9, &temp_rb);
+    tempPrev = tempFixed;
+  }
+  if (respFixed > (1.15 * respPrev) || respFixed < (0.85 * respPrev)) {
+    put_data((char)respFixed, 9, &resp_rb);
+    respPrev = respFixed;
   }
 
   Serial.println("Fixed");
@@ -269,12 +313,15 @@ void compute(void* data) {
   Serial.print(systoFixed);Serial.print(" ");
   Serial.print(diasFixed);Serial.print(" ");
   Serial.print(pulseFixed);Serial.print(" ");
+  Serial.print(respFixed);Serial.print(" ");
   Serial.println();
 
   intToChar(data_in->tempCorrectedBuf, tempFixed);
   intToChar(data_in->bloodPressCorrectedBuf, systoFixed);
   intToChar(data_in->bloodPressCorrectedBuf + 8, diasFixed);
   intToChar(data_in->pulseRateCorrectedBuf, pulseFixed);
+  intToChar(data_in->respirationRateCorrectedBuf, respFixed);
+
 
   Serial.println("Corrected");
   Serial.print(data_in->tempCorrectedBuf[0]);Serial.print(data_in->tempCorrectedBuf[1]);Serial.print(data_in->tempCorrectedBuf[2]); Serial.print(" ");
@@ -295,7 +342,11 @@ void displayF (void* data) {
   if (tempFlag) {
     // print temperature
     if (tempOutOfRange == 1) {
-      tft.setTextColor(ORANGE);
+      if (tempHigh || tempLow) {
+        tft.setTextColor(RED);  
+      } else {
+        tft.setTextColor(ORANGE);
+      }
     } else {
       tft.setTextColor(GREEN);
     }
@@ -306,7 +357,7 @@ void displayF (void* data) {
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
   }
-  if (pulseFlag) {
+  if (pressFlag) {
     // print systolic pressure
     if (sysOutOfRange == 1 && !sysRed) {
       tft.setTextColor(ORANGE);
@@ -341,10 +392,15 @@ void displayF (void* data) {
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
   }
-  if (pressFlag) {
+
+  if (pulseFlag) {
     // print pulse rate
     if (pulseOutOfRange == 1) {
-      tft.setTextColor(ORANGE);
+      if(pulseLow || pulseHigh) {
+        tft.setTextColor(RED);  
+      } else {
+        tft.setTextColor(ORANGE);  
+      }
     } else {
       tft.setTextColor(GREEN);
     }
@@ -352,6 +408,25 @@ void displayF (void* data) {
     tft.print((char)data_in->pulseRateRawBuf[0]);
     tft.print((char)data_in->pulseRateRawBuf[1]);
     tft.print((char)data_in->pulseRateRawBuf[2]);
+    tft.print(" BPM                  |");
+    tft.setTextColor(GREEN);
+    tft.print("|                                      |");
+  }
+  if (respFlag) {
+    // print pulse rate
+    if (rrOutOfRange == 1) {
+      if (rrHigh || rrLow) {
+        tft.setTextColor(RED);  
+      } else {
+        tft.setTextColor(YELLOW);
+      }
+    } else {
+      tft.setTextColor(GREEN);
+    }
+    tft.print("| Respiration Rate: ");
+    tft.print((char)data_in->respirationRateRawBuf[0]);
+    tft.print((char)data_in->respirationRateRawBuf[1]);
+    tft.print((char)data_in->respirationRateRawBuf[2]);
     tft.print(" BPM                  |");
     tft.setTextColor(GREEN);
     tft.print("|                                      |");
@@ -413,16 +488,21 @@ void warningAlarm (void* data) {
   diasFixed = 6 + 1.5 * diasFixed;
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 8 + 3 * pulseFixed;
+  int respFixed = (int) *(data_in->respirationRateRawBuf);
+  respFixed = 8 + 3 * respFixed;
 
   // Temperature
-  if (tempFixed < 36.1 || tempFixed > 37.8) {
+  if (tempFixed < 34.295 || tempFixed > 39.69) {
     tempOutOfRange = 1;
-    if ((int) *(data_in->temperatureRawBuf) > 37.8) {
+    if ((int) *(data_in->temperatureRawBuf) > 43.47) {
       tempHigh = TRUE;
+    } else if ((int) *(data_in->temperatureRawBuf) < 30.685) {
+       tempLow = TRUE; 
     }
   } else {
     tempOutOfRange = 0;
     tempHigh = FALSE;
+    tempLow = FALSE;
   }
 
   // BP
@@ -437,8 +517,9 @@ void warningAlarm (void* data) {
       if (systoFixed > 156 || systoFixed < 96) {
         sysRed = TRUE;
       } else {
-         sysRed = FALSE;
+        sysRed = FALSE;
       }
+     
     } else {
       alarmAcknowledge = 0;
       sysOutOfRange = FALSE;
@@ -450,17 +531,33 @@ void warningAlarm (void* data) {
     diasOutOfRange = 0;
   }
 
-  // Palse Rate
-  if (pulseFixed < 60  || pulseFixed > 100) {
+  // Pulse Rate
+  if (pulseFixed < 57  || pulseFixed > 105) {
     pulseOutOfRange = 1;
-     if (pulseFixed < 60) {
+     if (pulseFixed < 51) {
       pulseLow = TRUE;
+    } else if (pulseFixed  > 115) {
+      pulseHigh = TRUE;  
     }
   } else {
     pulseOutOfRange = 0;
     pulseLow = FALSE;
+    pulseHigh = FALSE;
   }
-
+  // respiration rate
+  if (respFixed < 11 || respFixed > 26) {
+    rrOutOfRange = 1;
+    if (respFixed > 28) {
+      rrHigh = TRUE;
+    } else {
+      rrHigh = FALSE;  
+    }  
+    if (respFixed < 11) {
+      rrLow = TRUE;  
+    } else {
+      rrLow = FALSE;  
+    }
+  }
   // Battery
   if (*(data_in->batteryState) < 20  ) {
     lowPower = TRUE;

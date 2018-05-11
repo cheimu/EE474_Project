@@ -18,6 +18,7 @@ typedef struct {
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
+  unsigned int* respirationRateRaw;
 } MeasureData;
 
 void measure (MeasureData* data_in, char which) {
