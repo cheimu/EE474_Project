@@ -1,5 +1,8 @@
 #ifndef UNO
 #define UNO
+
+
+
 unsigned long global_timer = micros();
 char inbyte;
 char functionIndex;
@@ -9,9 +12,6 @@ unsigned int systolicPressRaw = 80;
 unsigned int diastolicPressRaw = 80;
 unsigned int pulseRateRaw = 75;
 unsigned int respirationRateRaw =25;
-
-
-
 
 int tempPin = A5;
 int bpPin = A4;
@@ -35,6 +35,7 @@ int Pressure = 70;
 
 int pr_count = 0;
 
+int EKGReady = 0;
 
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
@@ -54,15 +55,18 @@ volatile static int tempUp=0;
 volatile static int pulseUp=0;
 volatile static int systoDone = 0;
 
-typedef struct {
+/*typedef struct {
   unsigned int* temperatureRaw;
   unsigned int* systolicPressRaw;
   unsigned int* diastolicPressRaw;
   unsigned int* pulseRateRaw;
   unsigned int* respirationRateRaw;
 } MeasureData;
-
-
+*/
+//typedef struct {
+  //signed int* EKGRawBuf;
+  //signed int* EKGFreq;
+//} EKGData;
 
 
 
@@ -163,7 +167,7 @@ void pr_detect() {
       if (functionIndex & 0b1000 ) {
         respirationRateRaw = pulseRateRaw_1;
       } 
-      if (functionIndex & 0b0100) {
+      if (functionIndex & 0b0010) {
         pulseRateRaw = pulseRateRaw_1;
       }
       pr_count++;
@@ -172,9 +176,9 @@ void pr_detect() {
 
 
 
-void measure (MeasureData* data, char which) {
+void measure (char which) {
 
-  MeasureData* data_in = (MeasureData*) data;
+  //MeasureData* data_in = (MeasureData*) data;
   // temperature
   if (which == 1) {
      temperatureRaw = analogRead(tempPin); 

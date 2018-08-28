@@ -15,8 +15,6 @@
 #define PRESS_FLAG(x,y) ((x < 870) && (x > 680) && (y < 612) && (y > 480))
 #define ALARM_FLAG(x,y) ((x < 300) && (x > 0) && (y < 370) && (y > 270))
 
-
-
 // values
 unsigned char temperatureRawBuf[8];
 unsigned char bloodPressRawBuf[16];
@@ -162,28 +160,28 @@ void loop() {
   pinMode(XM, OUTPUT);
   pinMode(YP, OUTPUT);
   // UI & mode control
-  if (p.z > MINPRESSURE && p.z < MAXPRESSURE){    
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE){
     if (cur == TOP) {
-      // top level     
+      // top level
       if (MENU_TRUE(p.x,p.y)) {
         cur = MENU;
       } else if (ANNUN_TRUE(p.x,p.y)) {
         cur = ANNUN;
-      } 
+      }
     } else if (cur == MENU) {
       // menu level
       if (BACK_TRUE(p.x,p.y)) {
         cur = TOP;
-      } 
+      }
       if (TEMP_FLAG(p.x,p.y)) {
         Serial.println(1);
         FLAG(tempFlag);
         Serial.println(tempFlag);
-      } 
+      }
       if (PULSE_FLAG(p.x,p.y)) {
         Serial.println(3);
         FLAG(pulseFlag);
-      } 
+      }
       if (PRESS_FLAG(p.x,p.y)) {
         Serial.println(2);
         FLAG(pressFlag);
@@ -210,13 +208,13 @@ void loop() {
         drawRect(90, 100, pulseFlag);
       }
     }
-    
+
     Serial.print(p.x);
     Serial.print(" ");
     Serial.print(p.y);
     Serial.print("\n");
   }
-  
+
   if (cur != prev) {
     if (cur == TOP) {
       Serial.print("TOP\n");
@@ -232,7 +230,7 @@ void loop() {
       } else {
         tft.fillRect(10, 100, 50, 50, RED);
       }
-      
+
       if (pulseFlag) {
         tft.fillRect(90, 100, 50, 50, GREEN);
       } else {
@@ -242,14 +240,14 @@ void loop() {
         tft.fillRect(170, 100, 50, 50, GREEN);
       } else {
         tft.fillRect(170, 100, 50, 50, RED);
-      } 
+      }
       tft.fillRect(0, 250, 800, 100, CYAN);
-     
+
     } else if (cur == ANNUN) {
       start = timer;
     }
   }
-  
+
   if (cur == ANNUN) {
     /*
     Serial.println("counters: ");
@@ -257,7 +255,7 @@ void loop() {
     Serial.println();
     */
     //Serial.println("before");
-    
+
     scheduler();
     //Serial.println("after");
   }

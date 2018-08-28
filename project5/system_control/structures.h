@@ -1,7 +1,7 @@
 #ifndef STRUCT
 #define STRUCT
 
-
+#include "optfft.h"
 // menu is tapped
 #define MENU_TRUE(x,y) ((y < 900) && (y > 600))
 // ANNUNCIATION is tapped
@@ -10,16 +10,16 @@
 #define DIS_TRUE(x,y) ((y < 300) && (y > 0))
 
 // return is pressed
-#define BACK_TRUE(x,y) ((y < 180) && (y > 0))
+#define BACK_TRUE(x,y) ((y < 150) && (y > 0))
 // flags set & unset
 #define FLAG(x) x=!x
-#define TEMP_FLAG(x,y)  ((y < 900) && (y > 720))
-#define PULSE_FLAG(x,y) ((y < 720) && (y > 540))
-#define PRESS_FLAG(x,y) ((y < 540) && (y > 360))
-#define RESP_FLAG(x,y)  ((y < 360) && (y > 180))
-#define ALARM_FLAG(x,y) ((y < 360) && (y > 180))
+#define TEMP_FLAG(x,y)  ((y < 900) && (y > 750))
+#define PULSE_FLAG(x,y) ((y < 750) && (y > 600))
+#define PRESS_FLAG(x,y) ((y < 600) && (y > 450))
+#define RESP_FLAG(x,y)  ((y < 450) && (y > 300))
+#define EKG_FLAG(x,y) ((y < 300) && (y > 150))
 
-
+#define ALARM_FLAG(x,y) ((y < 300) && (y > 150))
 
 
 #include "Elegoo_GFX.h"
@@ -79,6 +79,16 @@ volatile int sPrev=4;
 
 
 
+int ekg_buffer[16];
+
+
+void resetZeros(signed int zero[]) {
+   for (int i = 0; i < 256; i++) {
+      zero[i] = 0;  
+  }  
+}
+
+
 #define MINPRESSURE 10
 #define MAXPRESSURE 1000
 
@@ -87,10 +97,11 @@ typedef enum myBool2 Bool;
 unsigned short alarmAcknowledge=0;
 
 // screen state
-enum state { TOP = 0, MENU = 1, ANNUN = 2, DIS = 3 };
+enum state { TOP = 0, MENU = 1, ANNUN = 2, DIS = 3, NONE = 4, NODIS};
 typedef enum state SCR_STATE;
-SCR_STATE cur = TOP;
-SCR_STATE prev = TOP;
+SCR_STATE cur = NONE;
+SCR_STATE prev = NONE;
+SCR_STATE saved = NONE;
 
 unsigned short batteryState = 200;
 unsigned char tempOutOfRange = 0;
@@ -98,6 +109,8 @@ unsigned char pulseOutOfRange = 0;
 unsigned char sysOutOfRange = 0;
 unsigned char diasOutOfRange = 0;
 unsigned char rrOutOfRange = 0;
+unsigned char EKGOutOfRange = 0;
+
 Bool tempHigh = FALSE;
 Bool tempLow = FALSE;
 Bool rrLow = FALSE;
@@ -107,7 +120,8 @@ Bool pulseHigh = FALSE;
 Bool lowPower = FALSE;
 Bool sysRed = FALSE;
 Bool diasRed = FALSE;
-
+Bool EKGLow = FALSE;
+Bool EKGHigh = FALSE;
 
 // pulse ring buffer
 struct ringBuffer {
@@ -143,14 +157,24 @@ Bool computeFlag = FALSE;
 Bool disFlag = FALSE;
 Bool statusFlag = FALSE;
 Bool warnFlag = FALSE;
+Bool EKGCap = FALSE;
+Bool EKGPro = FALSE;
+Bool EKGCapFlag = FALSE;
+Bool EKGProFlag = FALSE; // for measure use
 
 typedef struct {
 	unsigned char* temperatureRawBuf;
 	unsigned char* bloodPressRawBuf;
 	unsigned char* pulseRateRawBuf;
   unsigned char* respirationRateRawBuf;
+  unsigned char* EKGFreqBuf;
 	unsigned short* measurementSelection;
 } MeasureData;
+
+typedef struct {
+  unsigned char* EKGRawBuf;
+  unsigned char* EKGFreqBuf;
+} EKGData;
 
 typedef struct {
 	unsigned char* temperatureRawBuf;
@@ -162,6 +186,8 @@ typedef struct {
 	unsigned char* bloodPressCorrectedBuf;
 	unsigned char* pulseRateCorrectedBuf;
   unsigned char* respirationRateCorrectedBuf;
+  unsigned char* EKGFreqBuf;
+  unsigned char* EKGCorrectedFreqBuf;
 } ComputeData;
 
 typedef struct {
@@ -169,6 +195,7 @@ typedef struct {
 	unsigned char* bloodPressCorrectedBuf;
 	unsigned char* pulseRateCorrectedBuf;
   unsigned char* respirationRateCorrectedBuf;
+  unsigned char* EKGCorrectedFreqBuf;
 	unsigned short* batteryState;
 } DisplayData;
 
@@ -206,6 +233,67 @@ struct TCB {
 
 typedef struct TCB TCB;
 
+unsigned char temp_r= 78;
+unsigned char sys_r = 78;
+unsigned char dias_r = 67;
+unsigned char pulse_r = 67;
+unsigned char resp_r = 45;
+int ekg_r = 56;
+
+int tempWr=0;
+int sysWr=0;
+int disWr=0;
+int pulsrW=0;
+int resWr=0;
+int ekgWr=0;
+
+typedef struct {
+  unsigned char* tempCorrectedBuf;
+  unsigned char* bloodPressCorrectedBuf;
+  unsigned char* pulseRateCorrectedBuf;
+  unsigned char* respirationRateCorrectedBuf;
+  unsigned char* EKGCorrectedFreqBuf;
+  unsigned char* temp_d;
+  unsigned char* sys_d;
+  unsigned char* dias_d;
+  unsigned char* pulse_d;
+  unsigned char* resp_d;
+  int* ekg_d;
+  int* temp_f;
+  int* sys_f;
+  int* dis_f;
+  int* pul_f;
+  int* res_f;
+  int* ekg_f;
+  int* tempW;
+  int* sysW;
+  int* disW;
+  int* pulsW;
+  int* resW;
+  int* ekgW;
+} RemoteComData;
+
+int warnUp = 0;
+int dataUp = 0;
+
+void remoteCom(void* data);
+
+typedef struct {
+  unsigned char* temp_d;
+  unsigned char* sys_d;
+  unsigned char* dias_d;
+  unsigned char* pulse_d;
+  unsigned char* resp_d;
+  int* ekg_d;
+  int* tempW;
+  int* sysW;
+  int* disW;
+  int* pulsW;
+  int* resW;
+  int* ekgW;
+} RemoteDisData;
+
+void remoteDis(void* data_in);
 TCB* head = NULL;
 TCB* tail = NULL;
 void insert(TCB* node);
@@ -217,22 +305,39 @@ int tempFlag = 1;
 int pulseFlag = 1;
 int pressFlag = 1;
 int respFlag = 1;
+int ekgFlag = 0;
+
+int EKGPin = A15;
 
 // task blocks and task queue
 TCB meas;
+TCB EKG_process;
+TCB EKG_capture;
 TCB comp;
 TCB disp;
 TCB warn;
 TCB stat;
 TCB key;
 TCB fla;
+TCB co;
+TCB reDispl;
+TCB reCOM;
+
+signed int EKGRawBuf[256];
+signed int zeros[256];
+
 MeasureData mData;
 ComputeData cData;
 DisplayData dData;
 WarningAlarmData wData;
 Status sData;
+RemoteDisData redisD;
+RemoteComData recomD;
 
-
+int command_enable = 0;
+int error_message = 0;
+int dis_enable = 1;
+void command (void* data);
 int is_first =0;
 
 void intToChar(unsigned char* result , int num) {
@@ -241,6 +346,12 @@ void intToChar(unsigned char* result , int num) {
   result[2] = (unsigned char) (num % 10 + 48);
 }
 
+void intToChar4(unsigned char* result , int num) {
+  result[0] = (unsigned char) (num / 1000 + 48);
+  result[1] = (unsigned char) (num /100 % 10  + 48);
+  result[2] = (unsigned char) (num /10 % 10 + 48);
+  result[3] = (unsigned char) (num % 10 + 48);
+}
 int functionSelect() {
   int s = 0;
   if (tempFlag)
@@ -256,9 +367,9 @@ int functionSelect() {
 
 void drawRect (int x, int y, int flag) {
   if (flag) {
-    tft.fillRect(x, y, 250, 60, GREEN);
+    tft.fillRect(x, y, 250, 50, GREEN);
   } else {
-     tft.fillRect(x, y, 250, 60, RED);
+     tft.fillRect(x, y, 250, 50, RED);
   }
 }
 
@@ -289,25 +400,29 @@ void drawMenu() {
   tft.setTextColor(BLACK);
   tft.setTextSize(2);
 
-  tft.setCursor(55, 20);
+  tft.setCursor(55, 15);
   drawRect(0, 0, tempFlag);
   tft.print("Tempreture");
 
-  tft.setCursor(55, 84);
-  drawRect(0, 64, pulseFlag);
+  tft.setCursor(55, 69);
+  drawRect(0, 54, pulseFlag);
   tft.print("Pulse Rate");
 
-  tft.setCursor(40, 148);
-  drawRect(0, 128, pressFlag);
+  tft.setCursor(40, 123);
+  drawRect(0, 108, pressFlag);
   tft.print("Blood Pressure");
 
-  tft.setCursor(20, 212);
-  drawRect(0, 192, respFlag);
+  tft.setCursor(20, 177);
+  drawRect(0, 162, respFlag);
   tft.print("Respiration Rate");
 
+  tft.setCursor(95, 231);
+  drawRect(0, 216, ekgFlag);
+  tft.print("EKG");
+
   tft.setTextSize(4);
-  tft.setCursor(70, 270);
-  tft.fillRect(0, 256, 250, 60, LPURPLE);
+  tft.setCursor(70, 280);
+  tft.fillRect(0, 270, 250, 50, LPURPLE);
   tft.print("BACK");
 
   tft.setTextSize(1);
@@ -317,6 +432,7 @@ void drawMenu() {
 
 void drawDis(void* data) {
   DisplayData* data_in = (DisplayData*) data;
+  tft.setCursor(0, 0);
   tft.fillScreen(BLACK);
   tft.setTextColor(GREEN);
   tft.setCursor(0,0);
@@ -361,7 +477,16 @@ void drawDis(void* data) {
   tft.print(" BPM            |");
   tft.setTextColor(GREEN);
   tft.print("|                                      |");
-    
+
+  tft.print("| EKG: ");
+  tft.print((char)data_in->EKGCorrectedFreqBuf[0]);
+  tft.print((char)data_in->EKGCorrectedFreqBuf[1]);
+  tft.print((char)data_in->EKGCorrectedFreqBuf[2]);
+  tft.print((char)data_in->EKGCorrectedFreqBuf[3]);
+  tft.print(" Hz                         |");
+  tft.setTextColor(GREEN);
+  tft.print("|                                      |");
+
   unsigned char battery[3];
   intToChar(battery, (int)*(data_in->batteryState));
   if ((int)*(data_in->batteryState) > 0) {
@@ -381,8 +506,8 @@ void drawDis(void* data) {
 
   // Back area
   tft.setTextSize(4);
-  tft.setCursor(70, 270);
-  tft.fillRect(0, 256, 250, 60, LPURPLE);
+  tft.setCursor(70, 285);
+  tft.fillRect(0, 270, 250, 60, LPURPLE);
   tft.print("BACK");
 
   tft.setTextSize(1);
@@ -390,31 +515,76 @@ void drawDis(void* data) {
   tft.setCursor(0, 0);
 }
 
+void ekg_capture(void* data) {
+  EKGCapFlag = TRUE;
+   for (int i = 0; i < 256; i++) {
+      long mark = micros();
+      double rawReading = (analogRead(EKGPin)- 512) * 21.0 / 341.0 + 0.53;
+      EKGRawBuf[i] = (signed int) rawReading;
+      while (micros() - mark < (1.0/10000.0)*1000000.0);
+   }
+   EKGProFlag = TRUE;
+}
+
+unsigned int EKGFreq;
+int ekg_pointer=0;
+void ekg_process(void* data) {
+  resetZeros(zeros);
+   EKGFreq = (unsigned int)optfft(EKGRawBuf, zeros); 
+   ekg_buffer[ekg_pointer] = (unsigned int) EKGFreq * 10000.0 / 256.0; // 9523 from sample period 105 micro second (see delay above)
+   if (ekg_pointer == 16) {
+    ekg_pointer = 0;
+   } else {
+    ekg_pointer++;
+   }
+    EKGProFlag = FALSE;
+}
+
 void measure(void* data) {
-  // set
   computeFlag = TRUE;
   disFlag = TRUE;
   statusFlag = TRUE;
   warnFlag = TRUE;
   MeasureData* data_in = (MeasureData*) data;
   *(data_in->measurementSelection) = (char)functionSelect();
-  Serial1.write(9);
+  
+  Serial1.write((char)9);
   Serial1.write(*(data_in->measurementSelection));
   Serial1.write(0);
 
+
+  while (Serial1.available() < 8);  
   
-    while (Serial1.available() < 8);
   
-    char inbyte = Serial1.read();
-    char temp_rx = Serial1.read();
-    char cuff = Serial1.read();
-    char systo_rx = Serial1.read();
-    char diasto_rx = Serial1.read();
-    char pr_rx = Serial1.read();
-    char rr_rx = Serial1.read();
-    char endbyte = Serial1.read();
+  
+  char inbyte = Serial1.read();
+  char temp_rx = Serial1.read();
+  char cuff = Serial1.read();
+  char systo_rx = Serial1.read();
+  char diasto_rx = Serial1.read();
+  char pr_rx = Serial1.read();
+  char rr_rx = Serial1.read();
+  
+
+  /*
+  char inbyte = 9;
+  char temp_rx = 100;
+  char cuff = 100;
+  char systo_rx = 98;
+  char diasto_rx = 100;
+  char pr_rx = 123;
+  char rr_rx = 200;
+  char EKG_rx = 1;
+  char endbyte = 0;
+  */
+  
+  char endbyte = Serial1.read();
+  
+    /*
     Serial.println("Received");
+    Serial.print("begin in");Serial.print(" ");
     Serial.print((unsigned int)inbyte); Serial.print(" ");
+    Serial.print("end in");
     Serial.print((unsigned int)temp_rx);Serial.print(" ");
     Serial.print((unsigned int)cuff);Serial.print(" ");
     Serial.print((unsigned int)systo_rx);Serial.print(" ");
@@ -423,7 +593,7 @@ void measure(void* data) {
     Serial.print((unsigned int)rr_rx);Serial.print(" ");
     Serial.print((unsigned int)endbyte);Serial.print(" ");
     Serial.println(); 
-  
+    */
 
 //   char temp_rx = 62;
 //   char systo_rx = 10000;
@@ -482,28 +652,42 @@ void keyPad(void* data) {
       }
       if (TEMP_FLAG(p.x,p.y)) {
         FLAG(tempFlag);
-        tft.setCursor(55, 20);
+        tft.setCursor(55, 15);
         drawRect(0, 0, tempFlag);
         tft.print("Tempreture");
       }
       if (PULSE_FLAG(p.x,p.y)) {
         FLAG(pulseFlag);
-        tft.setCursor(55, 84);
-        drawRect(0, 64, pulseFlag);
+        tft.setCursor(55, 69);
+        drawRect(0, 54, pulseFlag);
         tft.print("Pulse Rate");
       }
       if (PRESS_FLAG(p.x,p.y)) {
         FLAG(pressFlag);
-        tft.setCursor(40, 148);
-        drawRect(0, 128, pressFlag);
+        tft.setCursor(40, 123);
+        drawRect(0, 108, pressFlag);
         tft.print("Blood Pressure");
       }
       if (RESP_FLAG(p.x, p.y)) {
         FLAG(respFlag);
-        tft.setCursor(20, 212);
-        drawRect(0, 192, respFlag);
+        tft.setCursor(20, 177);
+        drawRect(0, 162, respFlag);
         tft.print("Respiration Rate");
       }
+     
+      if (EKG_FLAG(p.x, p.y)) {
+        FLAG(ekgFlag);
+        if (EKGCapFlag == TRUE) {
+          EKGCapFlag = FALSE;
+        } else {
+          EKGCapFlag = TRUE;
+        }
+        tft.setCursor(95, 231);
+        drawRect(0, 216, ekgFlag);
+        tft.print("EKG");
+
+      }
+      
     } else if (cur == ANNUN) {
       if (ALARM_FLAG(p.x,p.y)) {
 
@@ -521,15 +705,15 @@ void keyPad(void* data) {
         if (BACK_TRUE(p.x,p.y)) {
           cur = TOP;
         }
-
     }
-    
   }
 
   if (cur != prev) {
-    if (cur == TOP) {
-      Serial.print(F("TOP\n"));
-      drawTop();
+    if (cur == TOP || cur == NONE) {
+      if (dis_enable) {
+        Serial.print(F("TOP\n"));
+        drawTop();
+      }
     }
     else if (cur == MENU) {
       Serial.print(F("Menu\n"));
@@ -549,6 +733,14 @@ void keyPad(void* data) {
   }
 }
 
+int temp_f;
+int sys_f;
+int dis_f;
+int pul_f;
+int res_f;
+int ekg_f;
+
+
 void compute(void* data) {
   ComputeData* data_in = (ComputeData*) data;
   int tempFixed = (int)*(data_in->temperatureRawBuf);
@@ -560,9 +752,16 @@ void compute(void* data) {
   int pulseFixed = (int) *(data_in->pulseRateRawBuf);
   pulseFixed = 116 / 3 + pulseFixed * 37 / 15;
   int respFixed = (int) *(data_in->respirationRateRawBuf);
+  unsigned int EKGFixed = EKGFreq;
+  EKGFixed = (EKGFixed * 10000.0 / 256.0)* 0.6093 + 10;
+    
   
-
-
+  temp_f = tempFixed;
+  sys_f = systoFixed;
+  dis_f = diasFixed;
+  pul_f = pulseFixed;
+  res_f = respFixed;
+  ekg_f = EKGFixed;
   // add to buffer
   if (pulseFixed > (1.15 * pulsePrev) || pulseFixed < (0.85 * pulsePrev)) {
     put_data((char)pulseFixed, 9, &pulse_rb);
@@ -590,6 +789,7 @@ void compute(void* data) {
   intToChar(data_in->bloodPressCorrectedBuf + 8, diasFixed);
   intToChar(data_in->pulseRateCorrectedBuf, pulseFixed);
   intToChar(data_in->respirationRateCorrectedBuf, respFixed);
+  intToChar4(data_in->EKGCorrectedFreqBuf, EKGFixed);
 
 //  Serial.println(F("Corrected"));
 //  Serial.print(data_in->tempCorrectedBuf[0]);Serial.print(data_in->tempCorrectedBuf[1]);Serial.print(data_in->tempCorrectedBuf[2]); Serial.print(" ");
@@ -764,7 +964,7 @@ void displayF (void* data) {
       }
       
       if (rrOutOfRange == 1) {
-        if ((rrHigh || rrLow) && alarmAcknowledge == 0) {
+          if ((rrHigh || rrLow) && alarmAcknowledge == 0) {
           tft.setTextColor(RED);
         } else {
           tft.setTextColor(ORANGE);
@@ -777,6 +977,7 @@ void displayF (void* data) {
       tft.print((char)data_in->respirationRateCorrectedBuf[0]);
       tft.print((char)data_in->respirationRateCorrectedBuf[1]);
       tft.print((char)data_in->respirationRateCorrectedBuf[2]);
+      //tft.print((char)data_in->respirationRateCorrectedBuf[3]);
       tft.print(" BPM            |");
       tft.setTextColor(GREEN);
       tft.print("|                                      |");
@@ -828,18 +1029,18 @@ void displayF (void* data) {
     // Acknowledge area
     tft.setTextColor(BLACK);
     tft.setTextSize(2);
-    tft.setCursor(50, 212);
+    tft.setCursor(50, 227);
     if (alarmAcknowledge != 0) {
-      tft.fillRect(0, 192, 250, 60, GREEN);
+      tft.fillRect(0, 216, 250, 60, GREEN);
     } else {
-      tft.fillRect(0, 192, 250, 60, RED);
+      tft.fillRect(0, 216, 250, 60, RED);
     }
     tft.print("Acknowledge");
   
     // Back area
     tft.setTextSize(4);
-    tft.setCursor(70, 270);
-    tft.fillRect(0, 256, 250, 60, LPURPLE);
+    tft.setCursor(70, 285);
+    tft.fillRect(0, 270, 250, 60, LPURPLE);
     tft.print("BACK");
   
     tft.setTextSize(1);
@@ -977,94 +1178,102 @@ void flash(void* data) {
     DisplayData* data_in = (DisplayData*) data;
     
     int place = 24;
-    if (tempOutOfRange && !((tempHigh || tempLow) && alarmAcknowledge == 0)) {
-        tft.setCursor(0, place); 
-        if (tempOrange == 1) {
-          tft.setTextColor(ORANGE);
-          tft.print("| Temperature: ");
-          tft.print((char)data_in->tempCorrectedBuf[1]);
-          tft.print((char)data_in->tempCorrectedBuf[2]);
-          tft.print(" C                    |");
-          tft.setTextColor(GREEN);
-          tft.print("|                                      |");
-        } else {
-          tft.fillRect(0, place, 250, 8, BLACK);
-        }
-        if (timer - prevTemp > 1) {
-          prevTemp = timer;
-          tempOrange = -(tempOrange);
-        }
-    } 
+    if (tempFlag) {
+      if (tempOutOfRange && !((tempHigh || tempLow) && alarmAcknowledge == 0)) {
+          tft.setCursor(0, place); 
+          if (tempOrange == 1) {
+            tft.setTextColor(ORANGE);
+            tft.print("| Temperature: ");
+            tft.print((char)data_in->tempCorrectedBuf[1]);
+            tft.print((char)data_in->tempCorrectedBuf[2]);
+            tft.print(" C                    |");
+            tft.setTextColor(GREEN);
+            tft.print("|                                      |");
+          } else {
+            tft.fillRect(0, place, 250, 8, BLACK);
+          }
+          if (timer - prevTemp >= 2) {
+            prevTemp = timer;
+            tempOrange = -(tempOrange);
+          }
+      } 
+    }
     if (tempFlag) {
       place = place + 16;
     }
-    
-    if ((sysOutOfRange == 1 && !sysRed) ||  (sysRed == 1 && alarmAcknowledge != 0)) {
-        tft.setCursor(0, place);
-        if (sysOrange == 1) {
-          tft.setTextColor(ORANGE);
-          tft.print("| Systolic Pressure: ");
-          tft.print((char)data_in->bloodPressCorrectedBuf[0]);
-          tft.print((char)data_in->bloodPressCorrectedBuf[1]);
-          tft.print((char)data_in->bloodPressCorrectedBuf[2]);
-          tft.print(" mmHg          |");
-          tft.setTextColor(GREEN);
-          tft.print("|                                      |");
-        } else {
-          tft.fillRect(0, place, 250, 8, BLACK);
-        }
-        if (timer - prevSys > 2) {
-          prevSys = timer;
-          sysOrange = -(sysOrange);
-        }
+    if (pressFlag) {
+      if ((sysOutOfRange == 1 && !sysRed) ||  (sysRed == 1 && alarmAcknowledge != 0)) {
+          tft.setCursor(0, place);
+          if (sysOrange == 1) {
+            tft.setTextColor(ORANGE);
+            tft.print("| Systolic Pressure: ");
+            tft.print((char)data_in->bloodPressCorrectedBuf[0]);
+            tft.print((char)data_in->bloodPressCorrectedBuf[1]);
+            tft.print((char)data_in->bloodPressCorrectedBuf[2]);
+            tft.print(" mmHg          |");
+            tft.setTextColor(GREEN);
+            tft.print("|                                      |");
+          } else {
+            tft.fillRect(0, place, 250, 8, BLACK);
+          }
+          if (timer - prevSys >= 1) {
+            prevSys = timer;
+            sysOrange = -(sysOrange);
+          }
+      }
     }
     if (pressFlag) {
       place = place + 16;
     }
 
-    if ((diasOutOfRange == 1 && !diasRed) ||  (diasRed == 1 && alarmAcknowledge != 0)) {
-      tft.setCursor(0, place);
-      if (diasOrange == 1) {
-        tft.setTextColor(ORANGE);
-        tft.print("| Diastolic Pressure: ");
-        tft.print((char)data_in->bloodPressCorrectedBuf[8]);
-        tft.print((char)data_in->bloodPressCorrectedBuf[9]);
-        tft.print((char)data_in->bloodPressCorrectedBuf[10]);
-        tft.print(" mmHg         |");
-        tft.setTextColor(GREEN);
-        tft.print("|                                      |"); 
-      } else {
-        tft.fillRect(0, place, 250, 8, BLACK);
-      }
-      if (timer - prevDias > 2) {
-        prevDias = timer;
-        diasOrange = -(diasOrange);
+    if (pressFlag) {
+      if ((diasOutOfRange == 1 && !diasRed) ||  (diasRed == 1 && alarmAcknowledge != 0)) {
+        tft.setCursor(0, place);
+        if (diasOrange == 1) {
+          tft.setTextColor(ORANGE);
+          tft.print("| Diastolic Pressure: ");
+          tft.print((char)data_in->bloodPressCorrectedBuf[8]);
+          tft.print((char)data_in->bloodPressCorrectedBuf[9]);
+          tft.print((char)data_in->bloodPressCorrectedBuf[10]);
+          tft.print(" mmHg         |");
+          tft.setTextColor(GREEN);
+          tft.print("|                                      |"); 
+        } else {
+          tft.fillRect(0, place, 250, 8, BLACK);
+        }
+        if (timer - prevDias >= 1) {
+          prevDias = timer;
+          diasOrange = -(diasOrange);
+        }
       }
     }
-     if (pressFlag) {
+    
+    if (pressFlag) {
       place = place + 16;
     }
 
-    if (pulseOutOfRange == 1) {
-        if(!((pulseLow || pulseHigh) && alarmAcknowledge == 0)) {
-           tft.setCursor(0, place);
-          if (pulseOrange == 1) {
-            tft.setTextColor(ORANGE);
-            tft.print("| Pulse Rate: ");
-            tft.print((char)data_in->pulseRateCorrectedBuf[0]);
-            tft.print((char)data_in->pulseRateCorrectedBuf[1]);
-            tft.print((char)data_in->pulseRateCorrectedBuf[2]);
-            tft.print(" BPM                  |");
-            tft.setTextColor(GREEN);
-            tft.print("|                                      |");
-          } else {
-             tft.fillRect(0, place, 250, 8, BLACK);
+    if (pulseFlag) {
+      if (pulseOutOfRange == 1) {
+          if(!((pulseLow || pulseHigh) && alarmAcknowledge == 0)) {
+             tft.setCursor(0, place);
+            if (pulseOrange == 1) {
+              tft.setTextColor(ORANGE);
+              tft.print("| Pulse Rate: ");
+              tft.print((char)data_in->pulseRateCorrectedBuf[0]);
+              tft.print((char)data_in->pulseRateCorrectedBuf[1]);
+              tft.print((char)data_in->pulseRateCorrectedBuf[2]);
+              tft.print(" BPM                  |");
+              tft.setTextColor(GREEN);
+              tft.print("|                                      |");
+            } else {
+               tft.fillRect(0, place, 250, 8, BLACK);
+            }
+            if (timer - prevPulse >= 4) {
+              prevPulse = timer;
+              pulseOrange = -(pulseOrange);
+            }
           }
-          if (timer - prevPulse > 4) {
-            prevPulse = timer;
-            pulseOrange = -(pulseOrange);
-          }
-        }
+      }
     }
   }
 }
@@ -1094,40 +1303,41 @@ unsigned long prev_b;
 void scheduler() {
   head = NULL;
   tail = NULL;
+  insert(&co);
   insert(&key);
-  issue_count = 1;
-  Serial.println("States ");
-  Serial.println(cur);
-  if (cur < 0||cur > 3) {
+  Bool updataFlag = FALSE;
+  issue_count = 2;
+  if (cur < 0||cur > 5) {
+    Serial.println(cur);
     cur = 2;
   }
   if (cur == ANNUN || cur == DIS) {
     if (prev == cur) {
       interval = timer - start;
     }
-    Serial.println(interval);
-    Serial.println(timer_prev);
+    issue(&interval, &timer_prev, 19, &EKG_capture, &EKGCapFlag, 1);
     issue(&interval, &timer_prev, 19, &meas, &measureFlag, 0);
-    Serial.println("warning flag");
-    Serial.println(warnFlag);
+    issue(&interval, &timer_prev, 19, &EKG_process, &EKGProFlag, 1);
     issue(&interval, &timer_prev, 19, &comp, &computeFlag, 1);
     issue(&interval, &timer_prev, 0, &warn, &warnFlag, 0);
     issue(&interval, &timer_prev, 19, &disp, &disFlag, 1);
-  
+    if (dataUp || warnUp)
+      updataFlag = TRUE;
+    issue(&interval, &timer_prev, 19, &reCOM, &updataFlag, 0);
     timer_prev = interval;
   } 
   unsigned long block = (timer-start) % 20;
+  issue(&block, &prev_b, 19, &stat, NULL, 0);
+  insert(&reDispl);
+  issue_count++;
   prev_b = block;
   TCB* cur = head;
-  Serial.println("a");
   int i;
-  Serial.print("issue count:  ");Serial.print(issue_count);Serial.println();
 
   for (i = 0; i < issue_count; i++) {
     TCB* p = cur;
     (*cur->mytask)(cur->taskDataPr);
     cur = cur->next;
   }
-  Serial.println("b");
 }
 #endif

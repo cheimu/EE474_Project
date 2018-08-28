@@ -21,9 +21,9 @@ void put_data(char val, int size_i, ringBuffer* buf) {
         buf->bufTail+=1;
       }
       buf->bufHead+=1;
-    } else {
+     } else {
       buf->bufHead+=1;
-    }
+     }
   }
 }
 

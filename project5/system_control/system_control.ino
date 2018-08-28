@@ -13,8 +13,10 @@ unsigned char pulseRateCorrectedBuf[8];
 unsigned char respirationRateCorrectedBuf[8];
 
 unsigned short functionSelectValue;
-unsigned short measurementSelection = 0b111;
+unsigned short measurementSelection = 0b1111;
 
+unsigned char EKGFreqBuf[16];
+unsigned char EKGCorrectedFreqBuf[16];
 // pointer values
 unsigned short* batteryState_ptr = &batteryState;
 
@@ -24,10 +26,9 @@ void timerInterrupt() {
   } else {
     timer = timer + 1;
   }
-  if (sysRed) {
-    if (alarmAcknowledge) {
-          alarmAcknowledge = alarmAcknowledge - 1;
-    }
+  
+  if (alarmAcknowledge > 0) {
+    alarmAcknowledge = alarmAcknowledge - 1;
   }
 }
 
@@ -42,7 +43,7 @@ void setup() {
   #endif
 
   Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
-
+  pinMode(EKGPin, INPUT);
   tft.reset();
 
   uint16_t identifier = tft.readID();
@@ -85,32 +86,57 @@ void setup() {
   Serial1.begin(9600);
 
   // measure tcb
-  mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, &measurementSelection};
-  meas = {&measure, &mData};
+  mData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, EKGFreqBuf, &measurementSelection};
+  meas = {&measure, &mData,(TCB*) 0, (TCB*) 0};
 
   // compute tcb
-  cData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, &measurementSelection, tempCorrectedBuf,  bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf};
-  comp = {&compute, &cData};
+  cData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, &measurementSelection, tempCorrectedBuf,  bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, EKGFreqBuf, EKGCorrectedFreqBuf};
+  comp = {&compute, &cData, (TCB*) 0, (TCB*) 0};
 
   // display tcb
-  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, batteryState_ptr};
-  disp = {&displayF, &dData};
+  dData = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, EKGCorrectedFreqBuf, batteryState_ptr};
+  disp = {&displayF, &dData, (TCB*) 0, (TCB*) 0};
 
   // warning tcb
   wData = {temperatureRawBuf, bloodPressRawBuf, pulseRateRawBuf, respirationRateRawBuf, batteryState_ptr};
-  warn = {&warningAlarm, &wData};
-
+  warn = {&warningAlarm, &wData,(TCB*) 0, (TCB*) 0};
+  
   // status tcb
   sData = {batteryState_ptr};
-  stat = {&statusF, &sData};
+  stat = {&statusF, &sData,(TCB*) 0, (TCB*) 0};
   
   // keypad tcb
-  key = {&keyPad, &dData};
+  key = {&keyPad, &dData, (TCB*) 0, (TCB*) 0};
 
+  co = {&command, (void*) 0, (TCB*) 0, (TCB*) 0};
   // flash tcb
-  fla = {&flash, &dData};
+  fla = {&flash, &dData, (TCB*) 0, (TCB*) 0};
 
+
+  insert(&co);
+
+  // ekg captuer tcb
+  EKG_capture = {&ekg_capture, (void*) 0, (TCB*) 0, (TCB*) 0};
+  // ekg process tcb
+  EKG_process = {&ekg_process, (void*) 0, (TCB*) 0, (TCB*) 0};
+  
+  // int temp_f;
+int sys_f;
+int dis_f;
+int pul_f;
+int res_f;
+int ekg_f;
+  recomD = {tempCorrectedBuf, bloodPressCorrectedBuf, pulseRateCorrectedBuf, respirationRateCorrectedBuf, EKGCorrectedFreqBuf, 
+              &temp_r, &sys_r, &dias_r, &pulse_r, &resp_r, &ekg_r, &temp_f, &sys_f, &dis_f, &pul_f, &res_f, &ekg_f, &tempWr, &sysWr, &disWr, &pulsrW, 
+              &resWr, &ekgWr};
+  
+  reCOM = {&remoteCom, &recomD, (TCB*) 0, (TCB*) 0}; 
+  
+  redisD = {&temp_r, &sys_r, &dias_r, &pulse_r, &resp_r, &ekg_r, &tempWr, &sysWr, &disWr, &pulsrW, 
+              &resWr, &ekgWr};
+  reDispl = {&remoteDis, &redisD, (TCB*) 0, (TCB*) 0};
   insert(&key);
+  
   
   temp_rb = {1, 0, 0, {0,0,0,0,0,0,0,0}};
   pulse_rb = {1, 0, 0, {0,0,0,0,0,0,0,0}};
